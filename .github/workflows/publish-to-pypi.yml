@@ -1,16 +1,21 @@
 # SPDX-FileCopyrightText: 2022 Sascha Brawer <sascha@brawer.ch>
 # SPDX-Licence-Identifier: MIT
 #
-# Publish Python packages to PyPI and TestPyPI
+# Publish Python packages to PyPI
 #
 # Adapted from this template:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+#
+# Local modifications:
+# - Run unit tests
+# - Do not push to TestPyPI because of this bug:
+#   https://github.com/pypa/setuptools_scm/issues/455
 
-name: Publish Python packages 📦 to PyPI and TestPyPI
+name: Test, build and publish Python packages 📦 to PyPI
 on: [push]
 jobs:
-  build-n-publish:
-    name: Publish Python packages 📦 to PyPI and TestPyPI
+  test-build-n-publish:
+    name: Test, build, and publish Python packages 📦 to PyPI
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
@@ -18,19 +23,15 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: 3.9
+    - name: Run unit tests
+      run: |
+        PYTHONPATH=src python -m unittest
     - name: Install pypa/build
       run: >-
         python -m
         pip install
         build
         --user
-    - name: Instruct setuptools-scm not to add a local version part
-      if: >-
-        github.event_name == 'push' &&
-        github.ref == 'refs/heads/devel'
-      run: |
-        echo 'local_scheme = "no-local-version"' >> pyproject.toml
-        git update-index --assume-unchanged pyproject.toml
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m
@@ -39,11 +40,6 @@ jobs:
         --wheel
         --outdir dist/
         .
-    - name: Publish distribution package 📦 to TestPyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
     - name: Publish distribution packages 📦 to PyPI
       if: startsWith(github.ref, 'refs/tags')
       uses: pypa/gh-action-pypi-publish@master
