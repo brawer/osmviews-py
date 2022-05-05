@@ -24,6 +24,13 @@ jobs:
         pip install
         build
         --user
+    - name: Instruct setuptools-scm not to add a local version part
+      if: >-
+        github.event_name == 'push' &&
+        github.ref == 'refs/heads/devel'
+      run: |
+        echo 'local_scheme = "no-local-version"' >> pyproject.toml
+        git update-index --assume-unchanged pyproject.toml
     - name: Build a binary wheel and a source tarball
       run: >-
         python -m

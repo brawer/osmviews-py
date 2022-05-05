@@ -5,4 +5,6 @@
 requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
+# This *must* come last in the file, because we append to the end of this
+# file from a GitHub workflow in .github/workflows/publish-to-pypi.yml
 [tool.setuptools_scm]
