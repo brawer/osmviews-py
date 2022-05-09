@@ -1,4 +1,4 @@
-# osmviews
+# OSMViews Python Client
 
 Python client for [OSMViews](https://osmviews.toolforge.org), a world-wide
 ranking of geographic locations based on OpenStreetMap tile logs. Please
