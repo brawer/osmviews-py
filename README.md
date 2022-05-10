@@ -11,7 +11,7 @@ see the [main repository](https://github.com/brawer/osmviews) for background.
 # pip install osmviews
 import osmviews
 osmviews.download('/tmp/osmviews.tiff')
-with osmviews.OSMViews('/tmp/osmviews.tiff') as o:
+with osmviews.open('/tmp/osmviews.tiff') as o:
     print(f'Tokyo, Shibuya:      {o.rank( 35.658514, 139.701330):>9.2f}')
     print(f'Tokyo, Sumida:       {o.rank( 35.710719, 139.801547):>9.2f}')
     print(f'Zürich, Altstetten:  {o.rank( 47.391485,   8.488945):>9.2f}')

@@ -40,6 +40,10 @@ def download(path):
     _write_metadata(metadata_path, etag, last_modified)
 
 
+def open(path):
+    return OSMViews(path)
+
+
 def _read_metadata(path):
     "'path/to/osmviews.json' -> (etag, last_modified)"
     try:
