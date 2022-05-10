@@ -1,11 +1,69 @@
 # SPDX-FileCopyrightText: 2022 Sascha Brawer <sascha@brawer.ch>
 # SPDX-Licence-Identifier: MIT
 
-import array, functools, math, struct, zlib
+import array
+import functools
+import json
+import math
+import os
+import re
+import shutil
+import struct
+import urllib.request
+import zlib
+
+
+_open = open
+
+
+def download(path):
+    url = 'https://osmviews.toolforge.org/download/osmviews.tiff'
+    metadata_path = re.sub('\.tiff?$', '', path) + '.json'
+    etag, last_modified = None, None
+    if os.path.exists(path):  # only use metadata if GeoTIFF file exists
+        etag, last_modified = _read_metadata(metadata_path)
+    req = urllib.request.Request(url)
+    if etag: req.add_header('If-None-Match', etag)
+    if last_modified: req.add_header('If-Modified-Since', last_modified)
+    try:
+        with urllib.request.urlopen(req) as r:
+            with _open(path + '.tmp', 'wb') as tmp:
+                shutil.copyfileobj(r, tmp, 512*1024)  # buffer size 512 KiByte
+            etag = r.headers.get('ETag')
+            last_modified = r.headers.get('Last-Modified')
+    except urllib.error.HTTPError as err:
+        if err.code == 304:  # 304 Not Modified. Local cache is still fresh.
+            return
+        else:
+            raise
+    os.replace(path + '.tmp', path)
+    _write_metadata(metadata_path, etag, last_modified)
+
+
+def _read_metadata(path):
+    "'path/to/osmviews.json' -> (etag, last_modified)"
+    try:
+        with _open(path, 'r') as f:
+            data = json.load(f)
+            return data.get('ETag'), data.get('Last-Modified')
+    except:
+        pass
+    return None, None
+
+
+def _write_metadata(path, etag, last_modified):
+    metadata = {}
+    if etag:
+        metadata['ETag'] = etag
+    if last_modified:
+        metadata['Last-Modified'] = last_modified
+    with _open(path, 'w') as f:
+        json.dump(metadata, f)
+
 
 class OSMViews(object):
     def __init__(self, path):
-        self.file = open(path, 'rb')
+        self.file = _open(path, 'rb')
         magic = self.file.read(4)
         if magic == b'II*\0':
             bigendian = False
