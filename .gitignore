@@ -1,5 +1,4 @@
 *~
 *.pyc
 /dist/
-/venv/
-/src/*.egg-info
+/uv.lock

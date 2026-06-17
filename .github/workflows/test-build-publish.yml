@@ -1,0 +1,41 @@
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
+
+name: Test, build and publish Python packages 📦 to PyPI
+
+on: [push, pull_request]
+
+jobs:
+  test-build-publish:
+    name: Test, build, and publish Python packages 📦 to PyPI
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv toolchain
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run unit tests
+        run: uv run --with pytest pytest
+
+      - name: Check version matches tag
+        if: startsWith(github.ref, 'refs/tags')
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          VERSION=$(grep '^version' pyproject.toml | sed 's/.*= *"\(.*\)"/\1/')
+          if [ "$TAG" != "$VERSION" ]; then
+            echo "Tag v$TAG does not match pyproject.toml version $VERSION"
+            exit 1
+          fi
+
+      - name: Build a binary wheel and a source tarball
+        run: uv build
+
+      - name: Publish distribution packages 📦 to PyPI
+        if: startsWith(github.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@release/v1

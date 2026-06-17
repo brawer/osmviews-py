@@ -1,3 +1,3 @@
-# SPDX-FileCopyrightText: 2022 Sascha Brawer <sascha@brawer.ch>
-# SPDX-Licence-Identifier: MIT
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
 
