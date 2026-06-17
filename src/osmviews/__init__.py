@@ -18,7 +18,7 @@ _open = open
 
 def download(path):
     url = 'https://osmviews.toolforge.org/download/osmviews.tiff'
-    metadata_path = re.sub('\.tiff?$', '', path) + '.json'
+    metadata_path = re.sub(r'\.tiff?$', '', path) + '.json'
     etag, last_modified = None, None
     if os.path.exists(path):  # only use metadata if GeoTIFF file exists
         etag, last_modified = _read_metadata(metadata_path)
