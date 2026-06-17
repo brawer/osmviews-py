@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
+
+name: Run tests and build Python package
+
+on: [push, pull_request]
+
+jobs:
+  test-build:
+    name: Run tests and build Python package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out sources
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Run unit tests
+        run: uv run --with pytest pytest
+
+      - name: Build Python package
+        run: uv build
