@@ -1,0 +1,29 @@
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
+#
+# Automatically generated release notes.
+# https://docs.github.com/en/repositories/releasing-projects-on-github/automatically-generated-release-notes
+
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+  categories:
+    - title: 🎉 New Features
+      labels:
+        - enhancement
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+    - title: 🏎️ Performance
+      labels:
+        - performance
+    - title: 📚 Documentation
+      labels:
+        - documentation
+    - title: 🤖 Dependencies
+      labels:
+        - dependencies
+    - title: 🔧 Other Changes
+      labels:
+        - "*"
