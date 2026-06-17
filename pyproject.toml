@@ -12,7 +12,7 @@ description = "Ranking geo locations based on OpenStreetMap views"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Sascha Brawer", email = "sascha@brawer.ch" }]
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
