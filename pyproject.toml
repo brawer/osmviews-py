@@ -1,8 +1,30 @@
-# SPDX-FileCopyrightText: 2022 Sascha Brawer <sascha@brawer.ch>
-# SPDX-Licence-Identifier: MIT
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
 
 [build-system]
-requires = ["setuptools>=45", "wheel", "setuptools_scm>=6.2"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build>=0.11,<0.12"]
+build-backend = "uv_build"
 
-[tool.setuptools_scm]
+[project]
+name = "osmviews"
+version = "0.1.0"
+description = "Ranking geo locations based on OpenStreetMap views"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Sascha Brawer", email = "sascha@brawer.ch" }]
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/brawer/osmviews-py"
+"Bug Tracker" = "https://github.com/brawer/osmviews-py/issues"
+
+[tool.uv.build-backend]
+module-name = "osmviews"
+source-include = ["src/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
