@@ -7,7 +7,7 @@ build-backend = "uv_build"
 
 [project]
 name = "osmviews"
-version = "0.1.0"
+version = "0.1.1"
 description = "Ranking geo locations based on OpenStreetMap views"
 readme = "README.md"
 license = { text = "MIT" }
