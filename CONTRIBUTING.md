@@ -30,7 +30,7 @@ Tests also run automatically on every push and pull request via GitHub Actions.
 Releases are published to [PyPI](https://pypi.org/project/osmviews/) automatically
 by GitHub Actions when a version tag is pushed. The steps are:
 
-**1. Update the version in `pyproject.toml`:**
+### 1. Update the version in `pyproject.toml`
 
 ```toml
 [project]
@@ -41,28 +41,25 @@ Follow [Semantic Versioning](https://semver.org): increment the patch version
 for bug fixes, the minor version for new features, and the major version for
 breaking changes.
 
-**2. Commit the version bump:**
+### 2. Commit the version bump
 
-```shell
-git commit -am "Release 0.2.0"
-```
+As with any other change, send a pull request and get it merged into
+the `main` branch.
 
-**3. Tag the commit:**
+### 3. Publish a new release
 
-```shell
-git tag v0.2.0
-```
+To cut a new release, go to the [new release page on
+GitHub](https://github.com/brawer/osmviews-py/releases/new).
 
-The tag must start with `v` and match the version in `pyproject.toml` exactly
-(e.g. tag `v0.2.0` for version `0.2.0`). The GitHub Actions workflow verifies
-this and will fail if they don’t match, preventing a mismatched release from
-being published.
+In “Tag: Select tag”, choose “Create new tag” and enter the tag.  It
+must start with `v` and match the version in `pyproject.toml` exactly
+(e.g. tag `v0.2.0` for version `0.2.0`).  The GitHub Actions workflow
+verifies this and will fail if they don’t match, preventing a
+mismatched release from being published.
 
-**4. Push the commit and tag:**
-
-```shell
-git push --follow-tags
-```
+As “Target", choose `main`. As “Release title”, enter the tag again,
+such as `v0.2.0`. Then, click on “Generate release notes”, and set
+“Release label” to ”Latest”. Finally, click “Publish release”.
 
 GitHub Actions will then run the tests, build the source distribution and
 wheel, and publish them to PyPI using trusted publishing (no API token
