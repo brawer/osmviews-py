@@ -9,6 +9,7 @@ SPDX-License-Identifier: MIT
 [![Python versions](https://img.shields.io/pypi/pyversions/osmviews.svg)](https://pypi.org/project/osmviews/)
 [![CI](https://github.com/brawer/osmviews-py/actions/workflows/ci.yml/badge.svg)](https://github.com/brawer/osmviews-py/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/brawer/osmviews-py/badge)](https://scorecard.dev/viewer/?uri=github.com/brawer/osmviews-py)
+[![REUSE status](https://api.reuse.software/badge/github.com/brawer/osmviews-py)](https://api.reuse.software/info/github.com/brawer/osmviews-py)
 
 Python client for [OSMViews](https://osmviews.toolforge.org), a world-wide ranking
 of geographic locations by how much they are looked at on OpenStreetMap-based
@@ -84,3 +85,9 @@ continued maintenance and future development via
 ## License
 
 MIT — see [LICENSE](https://github.com/brawer/osmviews-py/blob/main/LICENSE).
+
+The repository is [REUSE](https://reuse.software) compliant: every file declares
+its copyright and license, either in an SPDX header or via `REUSE.toml`. All code
+and documentation is MIT; the sole exception is `CODE_OF_CONDUCT.md`, adapted
+from the [Contributor Covenant](https://www.contributor-covenant.org) and
+licensed CC-BY-SA-4.0. It is not part of the published package.
