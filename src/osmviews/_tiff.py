@@ -35,6 +35,16 @@ TYPE_DOUBLE = 12
 
 TILE_SIDE = 256
 
+#: A decoded tile is exactly ``TILE_SIDE * TILE_SIDE`` 32-bit floats = 256 KiB.
+TILE_BYTES = TILE_SIDE * TILE_SIDE * 4
+
+#: Upper bound on a tile's *stored* (possibly compressed) size.  A DEFLATE stream
+#: can't beat its input by much even in the incompressible worst case -- stored
+#: blocks add ~5 bytes per 64 KiB plus the zlib wrapper -- so a blob larger than
+#: this is malformed.  Rejecting it at :func:`parse` keeps every allocation in
+#: the decode path bounded to one tile.
+MAX_TILE_BLOB = TILE_BYTES + 4096
+
 _U16 = struct.Struct("<H")
 _U32 = struct.Struct("<I")
 _F32 = struct.Struct("<f")
@@ -211,6 +221,8 @@ def _parse(data):
         blob_len = tile_byte_counts.get(i)
         if blob_len == 0 or off < 8:
             raise _err("invalid tile entry")
+        if blob_len > MAX_TILE_BLOB:
+            raise _err("tile blob is implausibly large")
         if off + blob_len > n_bytes:
             raise _err("tile data extends past end of file")
 

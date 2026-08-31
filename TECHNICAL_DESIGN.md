@@ -45,8 +45,11 @@ disk while an `OSMViews` is open.
 (the full-resolution level; the file also carries reduced-resolution pyramid
 levels that this package never needs) and validates that the file is the exact
 shape the OSMViews pipeline produces — little-endian classic TIFF, 256×256 tiles,
-single-band 32-bit float, DEFLATE or no compression, no predictor. Anything else
-is rejected with a `ValueError` (`osmviews.FormatError`). A general TIFF library
+single-band 32-bit float, DEFLATE or no compression, no predictor. It also checks
+that every tile’s byte range lies inside the file and is no larger than a
+256 KiB tile could plausibly compress to (`TILE_BYTES + 4096`), so a crafted
+file can’t make `rank()` read an outsized blob off disk. Anything else is
+rejected with a `ValueError` (`osmviews.FormatError`). A general TIFF library
 would be far more code and surface area for a format we fully control.
 
 **Projection.** The OSMViews grid is Web Mercator (EPSG:3857) and lines up
@@ -56,10 +59,13 @@ longitude/latitude to a pixel is about ten lines of arithmetic in
 past the Web Mercator limit, and non-finite inputs, return `0.0`.
 
 **Decompression.** Tiles are zlib-compressed, so the package uses `zlib` from the
-standard library. Decompression is bounded to one tile’s worth of output
-(256 KiB + 1 byte) and the result is rejected unless it is exactly 256 KiB and
-the zlib stream ended cleanly, so a malformed or zip-bomb tile cannot exhaust
-memory.
+standard library. The compressed blob is handed to `zlib` as a zero-copy
+`memoryview` of the mmap, and the decompressor is told to stop after one tile’s
+worth of output (256 KiB + 1 byte) — the rest of the stream is left unprocessed,
+never flushed. The result is accepted only if it is exactly 256 KiB and the zlib
+stream ended cleanly. Together with the stored-size check at `open()`, that means
+no crafted tile — whatever its compression ratio — can drive an allocation here
+past ~256 KiB.
 
 **Tile cache.** Decoding a tile is the expensive step, so decoded tiles are kept
 in a small LRU cache (default 64 tiles ≈ 16 MB, configurable; `0` disables it).
@@ -105,8 +111,10 @@ takes, so they add nothing measurable to the hot path.
 - **`pip-audit`** and **CodeQL** run in CI; **OpenSSF Scorecard** tracks the
   repository’s supply-chain posture. Dependabot proposes dev-dependency and
   GitHub Actions updates as grouped monthly pull requests.
-- **Bounded decompression**: a tile inflates to at most 256 KiB + 1 byte before
-  being validated, so a crafted tile cannot exhaust memory.
+- **Bounded tile allocations**: `open()` rejects any tile whose stored blob
+  exceeds ~260 KiB, and decompression is capped at 256 KiB + 1 byte of output, so
+  no crafted file — regardless of compression ratio — can make `rank()` allocate
+  an outsized buffer.
 - **All header parsing is bounds-checked**, and a corrupt file is rejected at
   `open()` so that `rank()` cannot raise on bad data.
 - **Releases** publish to PyPI via Trusted Publishing (short-lived OIDC token, no

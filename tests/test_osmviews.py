@@ -11,7 +11,13 @@ import threading
 import pytest
 
 import osmviews
-from tests._fixtures import TILE_OFFSETS_POS, build_tiff, temp_tiff
+from osmviews._tiff import MAX_TILE_BLOB
+from tests._fixtures import (
+    TILE_BYTE_COUNTS_POS,
+    TILE_OFFSETS_POS,
+    build_tiff,
+    temp_tiff,
+)
 
 # Points that land in a known grid tile of a build_tiff raster (size 512, two
 # tiles per axis).  Western hemisphere -> left column, northern -> top row.
@@ -138,6 +144,18 @@ def test_rejects_tile_offset_past_end_of_file():
     b[TILE_OFFSETS_POS : TILE_OFFSETS_POS + 4] = (0xFFFFFF00).to_bytes(4, "little")
     with temp_tiff(bytes(b)) as path, pytest.raises(ValueError):
         osmviews.open(path)
+
+
+def test_rejects_oversized_tile_blob():
+    # A tile whose stored size exceeds what a 256 KiB tile could compress to is
+    # rejected at open(), so rank()'s decode allocations stay bounded.
+    b = bytearray(build_tiff(8, [1.0, 2.0, 3.0, 4.0], 10.0))
+    b[TILE_BYTE_COUNTS_POS : TILE_BYTE_COUNTS_POS + 4] = (MAX_TILE_BLOB + 1).to_bytes(
+        4, "little"
+    )
+    with temp_tiff(bytes(b)) as path:
+        with pytest.raises(ValueError, match="implausibly large"):
+            osmviews.open(path)
 
 
 def test_shared_across_threads():

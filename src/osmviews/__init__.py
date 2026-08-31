@@ -53,8 +53,7 @@ DOWNLOAD_URL = "https://osmviews.toolforge.org/download/osmviews.tiff"
 #: tile is a fixed 256 KiB, so this is about 16 MiB.
 DEFAULT_CACHE_TILES = 64
 
-_TILE_PIXELS = 256 * 256
-_TILE_BYTES = _TILE_PIXELS * 4
+_TILE_BYTES = _tiff.TILE_BYTES
 
 
 def open(path, cache_tiles=DEFAULT_CACHE_TILES):
@@ -126,9 +125,12 @@ class OSMViews:
 
         # Decode the missed tile outside the lock, so concurrent readers don't
         # serialize on slow work.  The worst case is two threads briefly decoding
-        # the same tile and producing identical results.
+        # the same tile and producing identical results.  The compressed blob is
+        # read as a zero-copy view of the mmap; the `with` releases it (and so
+        # keeps `close()` working) before we return.
         started = time.perf_counter()
-        tile = self._decode(self._mmap[offset : offset + blob_len])
+        with memoryview(self._mmap) as file_view:
+            tile = self._decode(file_view[offset : offset + blob_len])
         elapsed = time.perf_counter() - started
         if tile is None:
             return 0.0
@@ -155,18 +157,26 @@ class OSMViews:
         self.close()
 
     def _decode(self, raw):
+        """Turn one tile's stored bytes (``raw``, a memoryview over the mmap or a
+        bytes object) into an ``array('f')`` of 65536 samples, or ``None`` if it
+        is not a well-formed tile.
+
+        ``open()`` already caps a tile's stored size, and the decompressor is
+        told to stop after one tile's worth of output, so neither the input nor
+        the output allocation here can be driven past ~256 KiB by a crafted file.
+        """
         if self._header.compression == 8:
             decompressor = zlib.decompressobj()
             try:
-                data = decompressor.decompress(bytes(raw), _TILE_BYTES + 1)
+                data = decompressor.decompress(raw, _TILE_BYTES + 1)
             except zlib.error:
                 return None
             if not decompressor.eof or len(data) != _TILE_BYTES:
                 return None
+        elif len(raw) == _TILE_BYTES:
+            data = raw
         else:
-            data = bytes(raw)
-            if len(data) != _TILE_BYTES:
-                return None
+            return None
         tile = array.array("f")
         tile.frombytes(data)
         if sys.byteorder != "little":
