@@ -12,6 +12,13 @@ the Conventional Commit history. Versioning follows
 the **minor** version may be breaking — see
 [RELEASING.md](RELEASING.md#choosing-the-version-number).
 
+## [0.2.1](https://github.com/brawer/osmviews-py/compare/v0.2.0...v0.2.1) (2026-08-31)
+
+
+### 🐞 Fixes
+
+* repair the release pipeline so publishing to PyPI works ([#31](https://github.com/brawer/osmviews-py/issues/31)) ([9a68223](https://github.com/brawer/osmviews-py/commit/9a682233e0c419e83221b2151676c841d9146e1a))
+
 ## [0.2.0](https://github.com/brawer/osmviews-py/compare/v0.1.1...v0.2.0) (2026-08-31)
 
 
