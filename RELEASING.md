@@ -81,11 +81,12 @@ Already configured on this repository (listed here in case it needs rebuilding):
      `Contents: Read and write`, `Pull requests: Read and write`; nothing else.
      “Where can this GitHub App be installed?” → **Only on this account**.
   2. On the App page: **Generate a private key** (downloads a `.pem`), and note
-     the numeric **App ID**.
+     the **Client ID** (shown near the top, `Iv23…`).
   3. **Install App** → select `brawer/osmviews-py` only.
   4. In the repo, **Settings → Secrets and variables → Actions**:
-     add a **variable** `RELEASE_PLEASE_APP_ID` (the App ID) and a **secret**
-     `RELEASE_PLEASE_APP_PRIVATE_KEY` (the full `.pem` contents).
+     add a **variable** `RELEASE_PLEASE_APP_CLIENT_ID` (the Client ID) and a
+     **secret** `RELEASE_PLEASE_APP_PRIVATE_KEY` (the full `.pem` contents).
+     Until the variable exists, the `release-please` workflow is skipped.
   5. Delete the local `.pem`. To rotate, generate a new key and update the
      secret; App tokens themselves are short-lived and auto-refreshed per run.
 
