@@ -1,77 +1,100 @@
-# Contributing to osmviews-py
+<!--
+SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+SPDX-License-Identifier: MIT
+-->
+
+# Contributing to osmviews-py 👋
+
+Thanks for looking! This is a small, focused package and contributions of every
+size are welcome — a typo fix, a clearer doc sentence, a missing test case, a bug
+report, or a new feature. No contribution is too small. 🙂
 
 ## Setting up a development environment
 
-This project uses [uv](https://docs.astral.sh/uv/) for dependency management
-and building. Install it if you haven’t already:
+This project uses [uv](https://docs.astral.sh/uv/). Install it if you haven’t
+already:
 
-```shell
+```sh
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
-Then clone the repository and run the tests to verify your setup:
+Then clone the repository and check your setup:
 
-```shell
+```sh
 git clone https://github.com/brawer/osmviews-py.git
 cd osmviews-py
-uv run --with pytest pytest
+uv run pytest
+uv run ruff check
+uv run ruff format --check
 ```
+
+CI runs the same checks on Python 3.11, 3.12 and 3.13, and requires `ruff check`
+and `ruff format --check` to be clean.
 
 ## Making changes
 
 - Keep changes focused; one topic per pull request.
-- Add or update tests for any changed behavior.
-- Make sure `uv run --with pytest pytest` passes before opening a pull request.
+- Add or update tests for any changed behaviour.
+- Run `uv run pytest && uv run ruff check && uv run ruff format` before opening a
+  pull request.
+- If you change dependencies, run `uv lock` and commit the updated `uv.lock`.
+- If you touch `.github/workflows/`, run `uvx zizmor .github/workflows/` — CI
+  enforces it (SHA-pinned actions and other workflow-security rules).
 
-Tests also run automatically on every push and pull request via GitHub Actions.
+## Running the tests against the real dataset 🌍
 
-## Release workflow
+Most tests build tiny synthetic GeoTIFFs and need nothing extra. The end-to-end
+test in `tests/test_online.py` runs against the real ~594 MB dataset and is
+skipped by default. To run it, fetch the file and point the test at it:
 
-Releases are published to [PyPI](https://pypi.org/project/osmviews/) automatically
-by GitHub Actions when a version tag is pushed. The steps are:
-
-### 1. Update the version in `pyproject.toml`
-
-```toml
-[project]
-version = "0.2.0"
+```sh
+curl -fSL -o osmviews.tiff https://osmviews.toolforge.org/download/osmviews.tiff
+OSMVIEWS_TIFF="$PWD/osmviews.tiff" uv run pytest
 ```
 
-Follow [Semantic Versioning](https://semver.org): increment the patch version
-for bug fixes, the minor version for new features, and the major version for
-breaking changes.
+`osmviews.tiff` in the repository root is picked up automatically (and is
+git-ignored).
 
-### 2. Commit the version bump
+## Running the micro-benchmarks 📈
 
-As with any other change, send a pull request and get it merged into
-the `main` branch.
+```sh
+uv run python benchmarks/bench.py
+```
 
-### 3. Publish a new release
+It builds a synthetic GeoTIFF and prints `ns/call` for a cache hit and for the
+re-decode path. Informational, not pass/fail.
 
-To cut a new release, go to the [new release page on
-GitHub](https://github.com/brawer/osmviews-py/releases/new).
+## Commit and PR style 📝
 
-In “Tag: Select tag”, choose “Create new tag” and enter the tag.  It
-must start with `v` and match the version in `pyproject.toml` exactly
-(e.g. tag `v0.2.0` for version `0.2.0`).  The GitHub Actions workflow
-verifies this and will fail if they don’t match, preventing a
-mismatched release from being published.
+We use [Conventional Commits](https://www.conventionalcommits.org) for pull
+request titles (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`, `perf:`,
+`build:`, `chore:`, `ci:`), and CI checks the PR title. PRs are squash-merged, so
+the title becomes the commit message on `main` and feeds the changelog. Releases
+are cut by [release-please](https://github.com/googleapis/release-please) — see
+[RELEASING.md](RELEASING.md).
 
-As “Target", choose `main`. As “Release title”, enter the tag again,
-such as `v0.2.0`. Then, click on “Generate release notes”, and set
-“Release label” to ”Latest”. Finally, click “Publish release”.
+Please keep changes focused, add tests for behaviour changes, and credit any
+sources you adapt code or data from.
 
-GitHub Actions will then run the tests, build the source distribution and
-wheel, and publish them to PyPI using trusted publishing (no API token
-required). You can monitor the workflow run under the
-[Actions tab](https://github.com/brawer/osmviews-py/actions).
+## Reporting issues and asking questions 🤝
 
+Open an issue on GitHub. For anything sensitive, or to report a Code of Conduct
+concern, email Sascha (sascha@brawer.ch). By contributing you agree that your
+work is licensed under the [MIT License](LICENSE), and to abide by our
+[Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Project structure
 
 ```
-pyproject.toml      project metadata and build configuration
-src/osmviews/       library source code
-tests/              unit tests
-.github/workflows/  CI/CD workflows (test, build, publish)
+pyproject.toml         project metadata, build and tool configuration
+src/osmviews/
+  __init__.py          public API: open(), OSMViews, DOWNLOAD_URL, Metrics
+  _tiff.py             hand-written OSMViews-GeoTIFF header parser
+  _projection.py       WGS84 -> Web Mercator pixel projection
+  _cache.py            decoded-tile LRU cache and the Metrics dataclass
+tests/
+  _fixtures.py         builder for synthetic OSMViews-shaped GeoTIFFs
+  test_*.py            unit tests
+benchmarks/bench.py    dependency-free micro-benchmarks
+.github/workflows/     CI, release-please, publish, CodeQL, Scorecard, pip-audit
 ```

@@ -1,25 +1,26 @@
 # SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
 # SPDX-License-Identifier: MIT
-#
-# Configuration for GitHub Dependabot to automatically update
-# project dependencies.
 
 version: 2
 updates:
-  - package-ecosystem: "github-actions"
+  - package-ecosystem: uv
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: monthly
     commit-message:
-      prefix: "chore"
-      include: "scope"
-  - package-ecosystem: "pip"
+      prefix: chore
+      include: scope
+    groups:
+      python-dependencies:
+        patterns: ["*"]
+
+  - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
+      interval: monthly
     commit-message:
-      prefix: "chore"
-      include: "scope"
+      prefix: chore
+      include: scope
+    groups:
+      github-actions:
+        patterns: ["*"]

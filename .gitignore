@@ -1,4 +1,7 @@
 *~
 *.pyc
+__pycache__/
 /dist/
-/uv.lock
+/.venv/
+/osmviews.tiff
+/osmviews.json
