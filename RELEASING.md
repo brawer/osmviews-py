@@ -29,8 +29,10 @@ Releases are automated with
    - generates **SLSA v1.0 Build Level 3** provenance
      (`multiple.intoto.jsonl`, attached to the GitHub release) via the SLSA
      project’s isolated reusable workflow;
-   - publishes to PyPI via **Trusted Publishing** (short-lived OIDC token, no
-     stored secret) with **PEP 740 attestations**.
+   - **waits for you to approve the `pypi` deployment** (the environment has a
+     required reviewer and only runs for `v*` tags), then publishes to PyPI via
+     **Trusted Publishing** (short-lived OIDC token, no stored secret) with
+     **PEP 740 attestations**.
 
 ## Choosing the version number
 
@@ -52,13 +54,18 @@ To force a specific version, put `Release-As: 1.0.0` in a commit body.
 
 ## One-time setup
 
-- **PyPI Trusted Publisher**: configure `brawer/osmviews-py`,
-  workflow `publish.yml`, environment `pypi` on
-  <https://pypi.org/manage/project/osmviews/settings/publishing/>.
-- **GitHub → Settings → Actions → General → Workflow permissions**: enable
-  “Allow GitHub Actions to create and approve pull requests” (release-please
-  opens the release PR).
-- Protect the `v*` tags and the `pypi` environment as desired.
+Already configured on this repository (listed here in case it needs rebuilding):
+
+- **PyPI Trusted Publisher** for `osmviews`: owner `brawer`, repository
+  `osmviews-py`, workflow `publish.yml`, environment `pypi`
+  (<https://pypi.org/manage/project/osmviews/settings/publishing/>).
+- **GitHub `pypi` environment**: required reviewer `brawer`, deployments limited
+  to `v*` tags.
+- **Settings → Actions → General → Workflow permissions**: “Allow GitHub Actions
+  to create and approve pull requests” is enabled (release-please opens the
+  release PR).
+- The `main` ruleset requires the `ruff`, `test (Python 3.11/3.12/3.13)` and
+  `pr-title` checks and squash-only merges.
 
 ## Verifying a release
 
