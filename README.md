@@ -7,7 +7,7 @@ SPDX-License-Identifier: MIT
 
 [![PyPI](https://img.shields.io/pypi/v/osmviews.svg)](https://pypi.org/project/osmviews/)
 [![Python versions](https://img.shields.io/pypi/pyversions/osmviews.svg)](https://pypi.org/project/osmviews/)
-[![CI](https://github.com/brawer/osmviews-py/actions/workflows/test-build.yml/badge.svg)](https://github.com/brawer/osmviews-py/actions/workflows/test-build.yml)
+[![CI](https://github.com/brawer/osmviews-py/actions/workflows/ci.yml/badge.svg)](https://github.com/brawer/osmviews-py/actions/workflows/ci.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/brawer/osmviews-py/badge)](https://scorecard.dev/viewer/?uri=github.com/brawer/osmviews-py)
 
 Python client for [OSMViews](https://osmviews.toolforge.org), a world-wide ranking

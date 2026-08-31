@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
 # SPDX-License-Identifier: MIT
 
-name: Run tests and build Python package
+name: CI
 
 on:
   push:
