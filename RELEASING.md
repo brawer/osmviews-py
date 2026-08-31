@@ -21,18 +21,33 @@ Releases are automated with
    `.release-please-manifest.json`.
 3. Review that PR and squash-merge it when you want to cut the release.
    release-please then pushes the `vX.Y.Z` tag and creates the GitHub release.
-4. The tag triggers `.github/workflows/publish.yml`, which:
+4. **Start the publish by hand:**
+
+   ```sh
+   gh workflow run publish.yml --ref vX.Y.Z
+   ```
+
+   release-please pushes the tag with the built-in `GITHUB_TOKEN`, and GitHub
+   does not start `push`-triggered workflows from `GITHUB_TOKEN` events, so the
+   tag alone won’t launch `publish.yml`. (A tag pushed by a person does launch
+   it.)
+5. `publish.yml` then:
    - downloads the real ~594 MB dataset and runs the full test suite, including
      the otherwise-skipped `tests/test_online.py`;
-   - checks the tag matches `pyproject.toml`;
+   - checks the ref matches `pyproject.toml`;
    - builds the sdist and wheel with `uv build`;
-   - generates **SLSA v1.0 Build Level 3** provenance
-     (`multiple.intoto.jsonl`, attached to the GitHub release) via the SLSA
-     project’s isolated reusable workflow;
+   - attests their **SLSA build provenance** with `actions/attest-build-provenance`
+     (Sigstore-signed, keyed to the artifact digests, kept in this repo’s
+     attestation store — not attached to the release, which is immutable);
    - **waits for you to approve the `pypi` deployment** (the environment has a
-     required reviewer and only runs for `v*` tags), then publishes to PyPI via
-     **Trusted Publishing** (short-lived OIDC token, no stored secret) with
-     **PEP 740 attestations**.
+     required reviewer and is limited to `v*` tags), then publishes to PyPI via
+     **Trusted Publishing** (short-lived OIDC token, no stored secret) with a
+     **PEP 740 attestation**.
+
+The GitHub release itself is **immutable** (repo setting): once published, its
+tag, commit and assets are frozen and GitHub adds its own signed release
+attestation. That is why a botched release (e.g. `v0.2.0`, which never reached
+PyPI) can only be superseded by a new version, never re-tagged.
 
 ## Choosing the version number
 
@@ -70,13 +85,12 @@ Already configured on this repository (listed here in case it needs rebuilding):
 ## Verifying a release
 
 ```sh
-# PEP 740 attestations are shown automatically on the PyPI release page.
+# The PEP 740 attestation is shown automatically on the PyPI release page.
 
-# SLSA provenance:
+# SLSA build provenance for a downloaded artifact:
 pip download osmviews==X.Y.Z --no-deps --no-binary :all: -d .
-gh release download vX.Y.Z --repo brawer/osmviews-py --pattern 'multiple.intoto.jsonl'
-slsa-verifier verify-artifact osmviews-X.Y.Z.tar.gz \
-  --provenance-path multiple.intoto.jsonl \
-  --source-uri github.com/brawer/osmviews-py \
-  --source-tag vX.Y.Z
+gh attestation verify osmviews-X.Y.Z.tar.gz --repo brawer/osmviews-py
+
+# The GitHub release's own attestation (tag, commit, assets):
+gh release verify vX.Y.Z --repo brawer/osmviews-py
 ```
