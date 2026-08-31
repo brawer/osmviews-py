@@ -7,7 +7,7 @@ build-backend = "uv_build"
 
 [project]
 name = "osmviews"
-version = "0.2.1"
+version = "0.2.2"
 description = "Ranking geographic locations by how much they are viewed on OpenStreetMap-based maps"
 readme = "README.md"
 license = "MIT"

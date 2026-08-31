@@ -12,6 +12,25 @@ the Conventional Commit history. Versioning follows
 the **minor** version may be breaking — see
 [RELEASING.md](RELEASING.md#choosing-the-version-number).
 
+## [0.2.2](https://github.com/brawer/osmviews-py/compare/v0.2.1...v0.2.2) (2026-08-31)
+
+
+### 🆕 Features
+
+* ship type hints (py.typed) ([#36](https://github.com/brawer/osmviews-py/issues/36)) ([f7e9f89](https://github.com/brawer/osmviews-py/commit/f7e9f89cedc21dac949bf0f4f656594590cf0622))
+
+
+### 🐞 Fixes
+
+* correct the PyPI project page and packaging metadata ([#34](https://github.com/brawer/osmviews-py/issues/34)) ([2a2228b](https://github.com/brawer/osmviews-py/commit/2a2228b23b19774e519f5e9281a1e5d556067abb))
+
+
+### 🚧 Maintenance
+
+* harden the release-dataset download and smoke-test the built wheel ([#35](https://github.com/brawer/osmviews-py/issues/35)) ([f6af99f](https://github.com/brawer/osmviews-py/commit/f6af99f15acb6170c029590f29205f5e76fdb37f))
+* run release-please as a GitHub App ([#33](https://github.com/brawer/osmviews-py/issues/33)) ([a50591b](https://github.com/brawer/osmviews-py/commit/a50591bae72726f510a0faf88dba36c980d83d8b))
+* use the App client-id for release-please and skip when unconfigured ([#37](https://github.com/brawer/osmviews-py/issues/37)) ([0adfff6](https://github.com/brawer/osmviews-py/commit/0adfff603d627b193a9ddbac683ae9c88bb760f5))
+
 ## [0.2.1](https://github.com/brawer/osmviews-py/compare/v0.2.0...v0.2.1) (2026-08-31)
 
 
