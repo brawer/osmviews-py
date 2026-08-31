@@ -16,6 +16,7 @@ name: release-please
 on:
   push:
     branches: [main]
+  workflow_dispatch: # kick a run by hand if a push-triggered one was skipped
 
 permissions: {}
 
