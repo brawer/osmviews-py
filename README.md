@@ -68,8 +68,10 @@ The TIFF header parsing and the map projection are done in-package.
 
 ## Contributing
 
-Contributions are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The design and
-its rationale are written up in [TECHNICAL_DESIGN.md](TECHNICAL_DESIGN.md).
+Contributions are welcome — see
+[CONTRIBUTING.md](https://github.com/brawer/osmviews-py/blob/main/CONTRIBUTING.md).
+The design and its rationale are written up in
+[TECHNICAL_DESIGN.md](https://github.com/brawer/osmviews-py/blob/main/TECHNICAL_DESIGN.md).
 
 ## Sponsoring
 
@@ -81,4 +83,4 @@ continued maintenance and future development via
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/brawer/osmviews-py/blob/main/LICENSE).
