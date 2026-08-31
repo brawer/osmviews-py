@@ -36,6 +36,11 @@ def test_download_url_points_at_a_tiff():
     assert osmviews.DOWNLOAD_URL.endswith(".tiff")
 
 
+def test_version_is_exposed():
+    assert isinstance(osmviews.__version__, str)
+    assert osmviews.__version__[0].isdigit()
+
+
 def test_format_error_is_a_value_error():
     assert issubclass(osmviews.FormatError, ValueError)
 

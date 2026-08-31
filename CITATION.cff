@@ -1,0 +1,23 @@
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
+
+cff-version: 1.2.0
+message: "If you use this software, please cite it using these metadata."
+title: "osmviews (Python client)"
+abstract: >-
+  Python client for OSMViews, a world-wide ranking of geographic locations by
+  how much they are looked at on OpenStreetMap-based maps.
+type: software
+authors:
+  - family-names: Brawer
+    given-names: Sascha
+repository-code: "https://github.com/brawer/osmviews-py"
+url: "https://osmviews.toolforge.org"
+license: MIT
+version: 0.2.1 # x-release-please-version
+keywords:
+  - openstreetmap
+  - osm
+  - geo
+  - ranking
+  - geotiff

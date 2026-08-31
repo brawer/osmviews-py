@@ -34,12 +34,19 @@ import sys
 import threading
 import time
 import zlib
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as _version
 
 from . import _projection, _tiff
 from ._cache import Metrics, TileCache
 from ._tiff import FormatError
 
-__all__ = ["DOWNLOAD_URL", "FormatError", "Metrics", "OSMViews", "open"]
+__all__ = ["DOWNLOAD_URL", "FormatError", "Metrics", "OSMViews", "__version__", "open"]
+
+try:
+    __version__ = _version("osmviews")
+except PackageNotFoundError:  # running from a source tree that was never installed
+    __version__ = "0.0.0+unknown"
 
 #: Where the OSMViews raster is published.
 #:

@@ -23,9 +23,7 @@ jobs:
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
       - run: uv run --group dev ruff check
       - run: uv run --group dev ruff format --check
-      # Enforce SHA-pinned actions and other workflow-security rules. The one
-      # tag-pinned reference (the SLSA generator, which requires a tag) carries
-      # an inline `# zizmor: ignore[unpinned-uses]`.
+      # Enforce SHA-pinned actions and other workflow-security rules.
       - run: uvx zizmor@1.30.0 --persona=regular .github/workflows/
 
   test:
@@ -36,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13"]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

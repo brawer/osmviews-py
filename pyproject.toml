@@ -21,9 +21,11 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Scientific/Engineering :: GIS",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -33,14 +35,24 @@ classifiers = [
 Homepage = "https://github.com/brawer/osmviews-py"
 Documentation = "https://github.com/brawer/osmviews-py/blob/main/README.md"
 Changelog = "https://github.com/brawer/osmviews-py/blob/main/CHANGELOG.md"
+Source = "https://github.com/brawer/osmviews-py"
 "Bug Tracker" = "https://github.com/brawer/osmviews-py/issues"
+Funding = "https://github.com/sponsors/brawer"
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.9"]
 
 [tool.uv.build-backend]
 module-name = "osmviews"
-source-include = ["src/"]
+# The module under src/ is in the sdist by default; also ship the tests,
+# benchmark and design docs so downstream packagers (Linux distros,
+# conda-forge) can build and test from it.
+source-include = [
+    "tests/**",
+    "benchmarks/**",
+    "CHANGELOG.md",
+    "TECHNICAL_DESIGN.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
