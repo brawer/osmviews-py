@@ -17,7 +17,7 @@ import math
 MAX_LAT = 85.05112877980659
 
 
-def project(lng, lat, size):
+def project(lng: float, lat: float, size: int) -> tuple[int, int] | None:
     """Map ``lng``/``lat`` (WGS84 degrees) to an ``(x, y)`` pixel in a
     ``size`` x ``size`` raster that spans the whole Web Mercator world square.
 

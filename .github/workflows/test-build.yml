@@ -23,6 +23,7 @@ jobs:
       - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
       - run: uv run --group dev ruff check
       - run: uv run --group dev ruff format --check
+      - run: uv run --group dev mypy
       # Enforce SHA-pinned actions and other workflow-security rules.
       - run: uvx zizmor@1.30.0 --persona=regular .github/workflows/
 

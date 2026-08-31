@@ -8,7 +8,16 @@ for every lookup, so the counters need no synchronisation of their own and add
 nothing to the hot path beyond a few integer increments.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import array
+
+    #: A decoded tile: an ``array('f')`` of 65536 samples.
+    Tile = array.array[float]
 
 
 @dataclass(frozen=True)
@@ -40,11 +49,21 @@ class Metrics:
     #: Cumulative wall-clock time, in seconds, spent reading and decoding tiles.
     decode_time: float
 
-    def tile_cache_hit_rate(self):
+    def tile_cache_hit_rate(self) -> float:
         """The fraction of tile lookups served from cache, or ``0.0`` before the
         first lookup."""
         lookups = self.tile_cache_hits + self.tile_cache_misses
         return self.tile_cache_hits / lookups if lookups else 0.0
+
+
+class _Entry:
+    __slots__ = ("data", "used")
+
+    def __init__(self, data: Tile, used: int) -> None:
+        self.data = data
+        #: Value of the cache's ``tick`` at the most recent access; smallest is
+        #: least recently used.
+        self.used = used
 
 
 class TileCache:
@@ -68,11 +87,10 @@ class TileCache:
         "tiles_decoded",
     )
 
-    def __init__(self, capacity):
+    def __init__(self, capacity: int) -> None:
         self.capacity = capacity
         self._tick = 0
-        # offset -> [data, used]; smallest ``used`` is least recently used.
-        self._entries = {}
+        self._entries: dict[int, _Entry] = {}
         self.queries = 0
         self.out_of_range = 0
         self.hits = 0
@@ -81,13 +99,13 @@ class TileCache:
         self.evictions = 0
         self.decode_time = 0.0
 
-    def record_out_of_range(self):
+    def record_out_of_range(self) -> None:
         """Record a ``rank()`` call whose coordinates fell outside the covered
         area."""
         self.queries += 1
         self.out_of_range += 1
 
-    def lookup(self, offset, pixel):
+    def lookup(self, offset: int, pixel: int) -> float | None:
         """Record a ``rank()`` call and return the requested pixel value if its
         tile is cached, else ``None``."""
         self.queries += 1
@@ -96,11 +114,11 @@ class TileCache:
             self.misses += 1
             return None
         self._tick += 1
-        entry[1] = self._tick
+        entry.used = self._tick
         self.hits += 1
-        return entry[0][pixel]
+        return entry.data[pixel]
 
-    def insert(self, offset, data, decode_time):
+    def insert(self, offset: int, data: Tile, decode_time: float) -> None:
         """Insert a freshly decoded tile, evicting the least recently used entry
         if the cache is full."""
         self.tiles_decoded += 1
@@ -108,13 +126,13 @@ class TileCache:
         if self.capacity == 0:
             return
         if offset not in self._entries and len(self._entries) >= self.capacity:
-            victim = min(self._entries, key=lambda k: self._entries[k][1])
+            victim = min(self._entries, key=lambda k: self._entries[k].used)
             del self._entries[victim]
             self.evictions += 1
         self._tick += 1
-        self._entries[offset] = [data, self._tick]
+        self._entries[offset] = _Entry(data, self._tick)
 
-    def metrics(self):
+    def metrics(self) -> Metrics:
         return Metrics(
             queries=self.queries,
             out_of_range=self.out_of_range,
