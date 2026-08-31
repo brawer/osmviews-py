@@ -14,11 +14,11 @@
     { "type": "feat", "section": "🆕 Features" },
     { "type": "fix", "section": "🐞 Fixes" },
     { "type": "perf", "section": "🏎️ Performance" },
-    { "type": "docs", "section": "📚 Documentation" },
-    { "type": "refactor", "section": "🚧 Maintenance" },
-    { "type": "test", "section": "🚧 Maintenance" },
-    { "type": "build", "section": "🚧 Maintenance" },
-    { "type": "ci", "section": "🚧 Maintenance" },
-    { "type": "chore", "section": "🚧 Maintenance", "hidden": false }
+    { "type": "docs", "section": "Documentation", "hidden": true },
+    { "type": "refactor", "section": "Refactoring", "hidden": true },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "build", "section": "Build", "hidden": true },
+    { "type": "ci", "section": "CI", "hidden": true },
+    { "type": "chore", "section": "Chores", "hidden": true }
   ]
 }

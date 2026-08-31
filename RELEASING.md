@@ -52,6 +52,11 @@ footer → a breaking bump. While the package is `0.x` (pre-1.0), `bump-minor-pr
 maps a breaking change to a **minor** bump (`0.1.z` → `0.2.0`) and everything
 else to a **patch** bump.
 
+Only `feat:`, `fix:` and `perf:` commits cut a release (and appear in
+`CHANGELOG.md`). `docs:`, `refactor:`, `test:`, `build:`, `ci:` and `chore:`
+(including Dependabot's `chore(deps):`) are silent — they ride along with the
+next real release. Use `Release-As:` if you need to ship one of those alone.
+
 The public API is: `OSMViews` and its methods, `Metrics` and its fields, `open`,
 `DOWNLOAD_URL`, `FormatError`, and the documented behaviour of `rank`.
 
