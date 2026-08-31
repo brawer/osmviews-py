@@ -39,10 +39,33 @@ jobs:
           echo "tag: $tag    pyproject.toml: $version"
           test "$tag" = "$version"
 
+      # The dataset is regenerated weekly, so key the cache by ISO week: at most
+      # one download per week, however often this workflow runs.
+      - name: Dataset cache key
+        id: week
+        run: echo "key=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+      - name: Cache the OSMViews dataset
+        id: dataset-cache
+        # Safe against cache poisoning: this workflow has no `pull_request`
+        # trigger, so only a release tag or a manual dispatch can write the
+        # cache, and its only consumer is the online test below -- never the
+        # `uv build` in the `build` job, which checks out fresh.
+        # zizmor: ignore[cache-poisoning]
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: osmviews.tiff
+          key: osmviews-tiff-${{ steps.week.outputs.key }}
+
       - name: Download the OSMViews dataset
+        if: steps.dataset-cache.outputs.cache-hit != 'true'
         run: | # keep in sync with osmviews.DOWNLOAD_URL
-          curl -fSL --retry 3 --retry-all-errors \
-            -o osmviews.tiff https://osmviews.toolforge.org/download/osmviews.tiff
+          # Toolforge throttles by IP range and can be slow: retry generously,
+          # but give up on a connection that stalls below 1 KiB/s for 5 minutes
+          # so a dead transfer fails in minutes instead of hanging for hours.
+          curl -fSL -o osmviews.tiff \
+            --connect-timeout 60 --retry 5 --retry-delay 15 --retry-all-errors \
+            --speed-limit 1024 --speed-time 300 \
+            https://osmviews.toolforge.org/download/osmviews.tiff
 
       - name: Run the full test suite, including the real-dataset test
         run: OSMVIEWS_TIFF="$PWD/osmviews.tiff" uv run --group dev pytest -q

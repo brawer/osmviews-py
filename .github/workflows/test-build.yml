@@ -45,3 +45,9 @@ jobs:
       # The ~594 MB real-dataset test stays skipped here (no OSMVIEWS_TIFF).
       - run: uv run --group dev pytest -q
       - run: uv build
+      - name: Smoke-test the built wheel
+        run: |
+          uv run --isolated --no-project --with "$(echo dist/*.whl)" python -c "
+          import osmviews
+          from osmviews import DOWNLOAD_URL, FormatError, Metrics, OSMViews, open
+          print('installed wheel imports OK')"
