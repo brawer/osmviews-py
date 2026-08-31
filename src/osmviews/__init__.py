@@ -26,6 +26,8 @@ The package does not download anything: fetch the raster from
 An :class:`OSMViews` instance is safe to share across threads.
 """
 
+from __future__ import annotations
+
 import array
 import builtins
 import math
@@ -36,16 +38,22 @@ import time
 import zlib
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
+from typing import TYPE_CHECKING
 
 from . import _projection, _tiff
 from ._cache import Metrics, TileCache
 from ._tiff import FormatError
 
+if TYPE_CHECKING:
+    import os
+    from types import TracebackType
+    from typing import Self
+
 __all__ = ["DOWNLOAD_URL", "FormatError", "Metrics", "OSMViews", "__version__", "open"]
 
 try:
     __version__ = _version("osmviews")
-except PackageNotFoundError:  # running from a source tree that was never installed
+except PackageNotFoundError:  # a source tree that was never installed
     __version__ = "0.0.0+unknown"
 
 #: Where the OSMViews raster is published.
@@ -63,7 +71,9 @@ DEFAULT_CACHE_TILES = 64
 _TILE_BYTES = _tiff.TILE_BYTES
 
 
-def open(path, cache_tiles=DEFAULT_CACHE_TILES):
+def open(
+    path: str | os.PathLike[str], cache_tiles: int = DEFAULT_CACHE_TILES
+) -> OSMViews:
     """Open a downloaded OSMViews GeoTIFF from local disk.
 
     ``cache_tiles`` is the decoded-tile cache capacity; ``0`` disables caching.
@@ -80,7 +90,9 @@ class OSMViews:
     :meth:`close` when done.
     """
 
-    def __init__(self, path, cache_tiles=DEFAULT_CACHE_TILES):
+    def __init__(
+        self, path: str | os.PathLike[str], cache_tiles: int = DEFAULT_CACHE_TILES
+    ) -> None:
         # The file stays open for the lifetime of the memory map, so it can't be
         # wrapped in a `with`; `close()` / the context manager release both.
         self._file = builtins.open(path, "rb")  # noqa: SIM115
@@ -102,7 +114,7 @@ class OSMViews:
         self._cache = TileCache(cache_tiles)
         self._lock = threading.Lock()
 
-    def rank(self, lng, lat):
+    def rank(self, lng: float, lat: float) -> float:
         """How much the location at ``lng``/``lat`` (WGS84 degrees, x then y as
         in GeoJSON) is looked at on OpenStreetMap-based maps.
 
@@ -146,24 +158,29 @@ class OSMViews:
             self._cache.insert(offset, tile, elapsed)
         return self._scale(value)
 
-    def metrics(self):
+    def metrics(self) -> Metrics:
         """A snapshot of internal counters (:class:`Metrics`), meant to be logged
         once at the end of a long-running job."""
         with self._lock:
             return self._cache.metrics()
 
-    def close(self):
+    def close(self) -> None:
         """Release the memory map and the underlying file."""
         self._mmap.close()
         self._file.close()
 
-    def __enter__(self):
+    def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, _exc_type, _exc, _tb):
+    def __exit__(
+        self,
+        _exc_type: type[BaseException] | None,
+        _exc: BaseException | None,
+        _tb: TracebackType | None,
+    ) -> None:
         self.close()
 
-    def _decode(self, raw):
+    def _decode(self, raw: memoryview) -> array.array[float] | None:
         """Turn one tile's stored bytes (``raw``, a memoryview over the mmap or a
         bytes object) into an ``array('f')`` of 65536 samples, or ``None`` if it
         is not a well-formed tile.
@@ -172,6 +189,7 @@ class OSMViews:
         told to stop after one tile's worth of output, so neither the input nor
         the output allocation here can be driven past ~256 KiB by a crafted file.
         """
+        data: bytes | memoryview
         if self._header.compression == 8:
             decompressor = zlib.decompressobj()
             try:
@@ -190,7 +208,7 @@ class OSMViews:
             tile.byteswap()
         return tile
 
-    def _scale(self, value):
+    def _scale(self, value: float) -> float:
         max_value = self._header.max_value
         if not math.isfinite(value) or not (max_value > 0.0):
             return 0.0

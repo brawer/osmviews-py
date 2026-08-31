@@ -26,17 +26,19 @@ cd osmviews-py
 uv run pytest
 uv run ruff check
 uv run ruff format --check
+uv run mypy
 ```
 
-CI runs the same checks on Python 3.11, 3.12 and 3.13, and requires `ruff check`
-and `ruff format --check` to be clean.
+CI runs the same checks on Python 3.11, 3.12 and 3.13, and requires `ruff check`,
+`ruff format --check` and `mypy` to be clean. The package ships type hints
+(`py.typed`); keep the public API annotated.
 
 ## Making changes
 
 - Keep changes focused; one topic per pull request.
 - Add or update tests for any changed behaviour.
-- Run `uv run pytest && uv run ruff check && uv run ruff format` before opening a
-  pull request.
+- Run `uv run pytest && uv run ruff check && uv run ruff format && uv run mypy`
+  before opening a pull request.
 - If you change dependencies, run `uv lock` and commit the updated `uv.lock`.
 - If you touch `.github/workflows/`, run `uvx zizmor .github/workflows/` — CI
   enforces it (SHA-pinned actions and other workflow-security rules).

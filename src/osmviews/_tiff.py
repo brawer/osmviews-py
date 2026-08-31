@@ -10,9 +10,18 @@ that does not match the expected shape is rejected rather than trying to be a
 general TIFF reader.
 """
 
+from __future__ import annotations
+
 import math
 import struct
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import mmap
+
+    #: What :func:`parse` accepts: a memory map of the file, or raw bytes.
+    Buffer = bytes | bytearray | memoryview | mmap.mmap
 
 TAG_IMAGE_WIDTH = 256
 TAG_IMAGE_LENGTH = 257
@@ -57,15 +66,16 @@ class TileTable:
 
     __slots__ = ("_data", "_elem", "_pos")
 
-    def __init__(self, data, pos, elem_size):
+    def __init__(self, data: Buffer, pos: int, elem_size: int) -> None:
         self._data = data
         self._pos = pos
         self._elem = _U16 if elem_size == 2 else _U32
 
-    def get(self, i):
+    def get(self, i: int) -> int:
         """Read the ``i``-th entry.  ``i`` must be within the tile grid; the
         array's extent was bounds-checked against the file in :func:`parse`."""
-        return self._elem.unpack_from(self._data, self._pos + i * self._elem.size)[0]
+        at = self._pos + i * self._elem.size
+        return int(self._elem.unpack_from(self._data, at)[0])
 
 
 @dataclass
@@ -87,30 +97,30 @@ class Header:
 class _Entry:
     __slots__ = ("count", "typ", "value")
 
-    def __init__(self, typ, count, value):
+    def __init__(self, typ: int, count: int, value: Buffer) -> None:
         self.typ = typ
         self.count = count
         self.value = value  # the 4-byte value/offset field, verbatim
 
-    def scalar_int(self):
+    def scalar_int(self) -> int | None:
         if self.count != 1:
             return None
         if self.typ == TYPE_SHORT:
-            return _U16.unpack_from(self.value)[0]
+            return int(_U16.unpack_from(self.value)[0])
         if self.typ == TYPE_LONG:
-            return _U32.unpack_from(self.value)[0]
+            return int(_U32.unpack_from(self.value)[0])
         return None
 
-    def scalar_float(self, data):
+    def scalar_float(self, data: Buffer) -> float | None:
         if self.count != 1:
             return None
         if self.typ == TYPE_FLOAT:
-            return _F32.unpack_from(self.value)[0]
+            return float(_F32.unpack_from(self.value)[0])
         if self.typ == TYPE_DOUBLE:
-            at = _U32.unpack_from(self.value)[0]
+            at = int(_U32.unpack_from(self.value)[0])
             if at + 8 > len(data):
                 return None
-            return _F64.unpack_from(data, at)[0]
+            return float(_F64.unpack_from(data, at)[0])
         return None
 
 
@@ -121,11 +131,11 @@ class FormatError(ValueError):
     """
 
 
-def _err(msg):
+def _err(msg: str) -> FormatError:
     return FormatError("not a readable OSMViews raster: " + msg)
 
 
-def parse(data):
+def parse(data: Buffer) -> Header:
     """Parse and validate the header of an OSMViews GeoTIFF held in ``data``
     (typically a memory map of the whole file).  Returns a :class:`Header`;
     raises :class:`ValueError` on anything that is not a raster we can read."""
@@ -135,7 +145,7 @@ def parse(data):
         raise _err("malformed TIFF header") from e
 
 
-def _parse(data):
+def _parse(data: Buffer) -> Header:
     n_bytes = len(data)
     if n_bytes < 8:
         raise _err("not a TIFF (file too short)")
@@ -157,10 +167,10 @@ def _parse(data):
     if ifd + 2 + n * 12 + 4 > n_bytes:
         raise _err("truncated IFD")
 
-    fields = {}
-    tile_offsets_entry = None
-    tile_byte_counts_entry = None
-    max_value = None
+    fields: dict[int, int | None] = {}
+    tile_offsets_entry: _Entry | None = None
+    tile_byte_counts_entry: _Entry | None = None
+    max_value: float | None = None
     for i in range(n):
         at = ifd + 2 + i * 12
         tag, typ, count = struct.unpack_from("<HHI", data, at)
@@ -195,7 +205,7 @@ def _parse(data):
     if fields.get(TAG_PLANAR_CONFIG) != 1:
         raise _err("unexpected planar configuration")
     compression = fields.get(TAG_COMPRESSION)
-    if compression not in (1, 8):
+    if compression is None or compression not in (1, 8):
         raise _err("unsupported compression")
     if fields.get(TAG_PREDICTOR) not in (None, 1):
         raise _err("TIFF predictor is not supported")
@@ -236,7 +246,7 @@ def _parse(data):
     )
 
 
-def _tile_table(data, entry, grid):
+def _tile_table(data: Buffer, entry: _Entry, grid: int) -> TileTable:
     if entry.typ == TYPE_SHORT:
         elem_size = 2
     elif entry.typ == TYPE_LONG:
@@ -250,7 +260,7 @@ def _tile_table(data, entry, grid):
         # Would be stored inline in the entry; the OSMViews pipeline never emits
         # a single-tile image, so we don't implement that path.
         raise _err("inline tile table not supported")
-    pos = _U32.unpack_from(entry.value)[0]
+    pos = int(_U32.unpack_from(entry.value)[0])
     if pos + total > len(data):
         raise _err("tile table extends past end of file")
     return TileTable(data, pos, elem_size)

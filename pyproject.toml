@@ -29,6 +29,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: GIS",
     "Topic :: Scientific/Engineering :: Information Analysis",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
 ]
 
 [project.urls]
@@ -40,7 +41,7 @@ Source = "https://github.com/brawer/osmviews-py"
 Funding = "https://github.com/sponsors/brawer"
 
 [dependency-groups]
-dev = ["pytest>=8", "ruff>=0.9"]
+dev = ["pytest>=8", "ruff>=0.9", "mypy>=1.11"]
 
 [tool.uv.build-backend]
 module-name = "osmviews"
@@ -56,6 +57,11 @@ source-include = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.mypy]
+files = ["src/osmviews"]
+python_version = "3.11"
+strict = true
 
 [tool.ruff]
 line-length = 88
