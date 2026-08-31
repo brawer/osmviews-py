@@ -12,6 +12,13 @@ the Conventional Commit history. Versioning follows
 the **minor** version may be breaking — see
 [RELEASING.md](RELEASING.md#choosing-the-version-number).
 
+## [0.2.3](https://github.com/brawer/osmviews-py/compare/v0.2.2...v0.2.3) (2026-08-31)
+
+
+### 🚧 Maintenance
+
+* allow release-please to be triggered manually ([#39](https://github.com/brawer/osmviews-py/issues/39)) ([d5f723b](https://github.com/brawer/osmviews-py/commit/d5f723b85f540a5cd538d12455a37d3fa7d07566))
+
 ## [0.2.2](https://github.com/brawer/osmviews-py/compare/v0.2.1...v0.2.2) (2026-08-31)
 
 
