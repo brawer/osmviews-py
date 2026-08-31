@@ -118,5 +118,27 @@ takes, so they add nothing measurable to the hot path.
 - **All header parsing is bounds-checked**, and a corrupt file is rejected at
   `open()` so that `rank()` cannot raise on bad data.
 - **Releases** publish to PyPI via Trusted Publishing (short-lived OIDC token, no
-  stored secret), carry PEP 740 attestations, and ship SLSA v1.0 Build Level 3
-  provenance. See [RELEASING.md](RELEASING.md).
+  stored secret) with a PEP 740 attestation; the built sdist and wheel also get a
+  SLSA build-provenance attestation, and the GitHub release is immutable (frozen
+  tag, commit and assets, plus GitHub's own release attestation). See
+  [RELEASING.md](RELEASING.md).
+
+  Provenance is produced by `actions/attest-build-provenance` rather than the
+  `slsa-github-generator` reusable workflow. This was **not a downgrade**: the
+  generator's provenance file has to be attached to the release as an asset,
+  which immutable releases (a security feature we want) forbid after publish; and
+  the generator can only be referenced by a mutable `@vX` tag, whereas the action
+  is pinned to a commit SHA. On GitHub-hosted runners the action's provenance
+  still meets SLSA Build Level 3 — the build runs on an ephemeral isolated
+  runner and the attestation is signed through the workflow's OIDC identity,
+  which build-time code cannot forge.
+
+  Immutable publishing then adds a *second* attestation on a separate trust
+  path: GitHub's release backend itself signs an in-toto `release` statement
+  (subject = the tag's commit and each asset digest) under its own
+  `dotcom.releases.github.com` Sigstore identity, verified with
+  `gh release verify`. So a release carries build provenance signed by the
+  workflow *and* a tag/commit/asset binding signed by GitHub — the generator
+  provided neither of the latter. Net effect: same build-provenance level, more
+  integrity guarantees, one fewer un-pinnable third-party workflow in the
+  release path.
