@@ -18,20 +18,15 @@ Releases are automated with
 2. `.github/workflows/release-please.yml` watches `main` and keeps a single open
    **“chore(main): release x.y.z”** pull request. It bumps the `version` in
    `pyproject.toml`, updates `CHANGELOG.md` from the commit history, and updates
-   `.release-please-manifest.json`.
+   `.release-please-manifest.json`. It runs as the **release-please-bot** GitHub
+   App (see [App setup](#one-time-setup)) — a workflow run started by the
+   built-in `GITHUB_TOKEN` cannot itself start further workflow runs, so the App
+   identity is what lets the release PR’s CI run and the tag launch
+   `publish.yml`.
 3. Review that PR and squash-merge it when you want to cut the release.
    release-please then pushes the `vX.Y.Z` tag and creates the GitHub release.
-4. **Start the publish by hand:**
-
-   ```sh
-   gh workflow run publish.yml --ref vX.Y.Z
-   ```
-
-   release-please pushes the tag with the built-in `GITHUB_TOKEN`, and GitHub
-   does not start `push`-triggered workflows from `GITHUB_TOKEN` events, so the
-   tag alone won’t launch `publish.yml`. (A tag pushed by a person does launch
-   it.)
-5. `publish.yml` then:
+4. The tag push launches `publish.yml` automatically. (To re-run it:
+   `gh workflow run publish.yml --ref vX.Y.Z`.) It then:
    - downloads the real ~594 MB dataset and runs the full test suite, including
      the otherwise-skipped `tests/test_online.py`;
    - checks the ref matches `pyproject.toml`;
@@ -76,11 +71,23 @@ Already configured on this repository (listed here in case it needs rebuilding):
   (<https://pypi.org/manage/project/osmviews/settings/publishing/>).
 - **GitHub `pypi` environment**: required reviewer `brawer`, deployments limited
   to `v*` tags.
-- **Settings → Actions → General → Workflow permissions**: “Allow GitHub Actions
-  to create and approve pull requests” is enabled (release-please opens the
-  release PR).
 - The `main` ruleset requires the `ruff`, `test (Python 3.11/3.12/3.13)` and
   `pr-title` checks and squash-only merges.
+- **`release-please-bot` GitHub App** — `release-please.yml` authenticates as
+  this App so its PR and tag can trigger CI:
+  1. Create the App at
+     <https://github.com/settings/apps/new> (a personal App is fine). Homepage
+     URL: the repo URL. Uncheck **Webhook → Active**. **Repository permissions**:
+     `Contents: Read and write`, `Pull requests: Read and write`; nothing else.
+     “Where can this GitHub App be installed?” → **Only on this account**.
+  2. On the App page: **Generate a private key** (downloads a `.pem`), and note
+     the numeric **App ID**.
+  3. **Install App** → select `brawer/osmviews-py` only.
+  4. In the repo, **Settings → Secrets and variables → Actions**:
+     add a **variable** `RELEASE_PLEASE_APP_ID` (the App ID) and a **secret**
+     `RELEASE_PLEASE_APP_PRIVATE_KEY` (the full `.pem` contents).
+  5. Delete the local `.pem`. To rotate, generate a new key and update the
+     secret; App tokens themselves are short-lived and auto-refreshed per run.
 
 ## Verifying a release
 

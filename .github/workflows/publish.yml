@@ -5,13 +5,11 @@
 # attests their build provenance, and publishes to PyPI via Trusted Publishing.
 # See RELEASING.md.
 #
-# release-please pushes the vX.Y.Z tag with the built-in GITHUB_TOKEN, and GitHub
-# does not start `push` workflows from GITHUB_TOKEN events -- so after merging a
-# release PR this must be started by hand:
+# release-please pushes the vX.Y.Z tag as a GitHub App (see release-please.yml),
+# so `push: tags` launches this automatically after a release PR is merged. The
+# `workflow_dispatch` trigger is a fallback for re-running a release:
 #
 #     gh workflow run publish.yml --ref vX.Y.Z
-#
-# The `push: tags` trigger still fires for a tag pushed by a human.
 
 name: Publish Python package to PyPI
 
