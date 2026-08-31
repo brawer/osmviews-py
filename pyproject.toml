@@ -8,19 +8,35 @@ build-backend = "uv_build"
 [project]
 name = "osmviews"
 version = "0.1.1"
-description = "Ranking geo locations based on OpenStreetMap views"
+description = "Ranking geographic locations by how much they are viewed on OpenStreetMap-based maps"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{ name = "Sascha Brawer", email = "sascha@brawer.ch" }]
 requires-python = ">=3.11"
+keywords = ["openstreetmap", "osm", "geo", "ranking", "geotiff"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: GIS",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 
 [project.urls]
 Homepage = "https://github.com/brawer/osmviews-py"
+Documentation = "https://github.com/brawer/osmviews-py/blob/main/README.md"
+Changelog = "https://github.com/brawer/osmviews-py/blob/main/CHANGELOG.md"
 "Bug Tracker" = "https://github.com/brawer/osmviews-py/issues"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.9"]
 
 [tool.uv.build-backend]
 module-name = "osmviews"
@@ -28,3 +44,13 @@ source-include = ["src/"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]  # long lines are the formatter's job
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["SIM117"]  # nested `with` blocks read fine in tests

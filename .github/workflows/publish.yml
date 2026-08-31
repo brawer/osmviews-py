@@ -1,41 +1,99 @@
 # SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
 # SPDX-License-Identifier: MIT
+#
+# Triggered by the vX.Y.Z tag that release-please pushes.  Runs the full test
+# suite against the real dataset, builds the distributions, generates SLSA v1.0
+# Build L3 provenance, and publishes to PyPI via Trusted Publishing.  See
+# RELEASING.md.
 
 name: Publish Python package to PyPI
 
 on:
   push:
-    tags:
-      - 'v*'
+    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+
+permissions: {}
 
 jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - name: Tag matches pyproject.toml version
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          version=$(grep -m1 '^version' pyproject.toml | sed 's/.*"\(.*\)".*/\1/')
+          echo "tag: $tag    pyproject.toml: $version"
+          test "$tag" = "$version"
+
+      - name: Download the OSMViews dataset
+        run: | # keep in sync with osmviews.DOWNLOAD_URL
+          curl -fSL --retry 3 --retry-all-errors \
+            -o osmviews.tiff https://osmviews.toolforge.org/download/osmviews.tiff
+
+      - name: Run the full test suite, including the real-dataset test
+        run: OSMVIEWS_TIFF="$PWD/osmviews.tiff" uv run --group dev pytest -q
+
+  build:
+    name: build
+    needs: verify
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+
+      - run: uv build
+
+      - name: Hash the distributions
+        id: hash
+        run: |
+          cd dist
+          echo "hashes=$(sha256sum ./* | base64 -w0)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  provenance:
+    name: SLSA provenance
+    needs: build
+    permissions:
+      actions: read # read the workflow run for the provenance
+      id-token: write # sign the provenance
+      contents: write # attach multiple.intoto.jsonl to the GitHub release
+    # The SLSA generator must be referenced by a semantic tag, not a commit SHA:
+    # it verifies its own ref at runtime and refuses to run from a raw SHA.
+    # zizmor: ignore[unpinned-uses]
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: ${{ needs.build.outputs.hashes }}
+      upload-assets: true
+
   publish:
-    name: Publish Python package to PyPI
+    name: publish to PyPI
+    needs: [build, provenance]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
-      id-token: write
+      id-token: write # OIDC for Trusted Publishing + PEP 740 attestations
     steps:
-      - name: Check out sources
-        uses: actions/checkout@v7
-
-      - name: Set up uv toolchain
-        uses: astral-sh/setup-uv@v7
-
-      - name: Run unit tests
-        run: uv run --with pytest pytest
-
-      - name: Check version matches git tag
-        run: |
-          TAG="${GITHUB_REF#refs/tags/v}"
-          VERSION=$(grep '^version' pyproject.toml | sed 's/.*= *"\(.*\)"/\1/')
-          if [ "$TAG" != "$VERSION" ]; then
-            echo "Tag v$TAG does not match pyproject.toml version $VERSION"
-            exit 1
-          fi
-
-      - name: Build a binary wheel and a source tarball
-        run: uv build
-
-      - name: Publish distribution package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2

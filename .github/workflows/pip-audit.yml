@@ -1,0 +1,34 @@
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
+#
+# Scans the locked dependency set (dev tools; there are no runtime dependencies)
+# for known advisories.
+
+name: pip-audit
+
+on:
+  push:
+    branches: [main]
+    paths: ["pyproject.toml", "uv.lock", ".github/workflows/pip-audit.yml"]
+  pull_request:
+    paths: ["pyproject.toml", "uv.lock", ".github/workflows/pip-audit.yml"]
+  schedule:
+    - cron: "41 5 * * 1" # Mondays, 05:41 UTC
+
+permissions: {}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+      - name: Export the locked environment
+        run: uv export --frozen --no-emit-project --all-groups -o requirements.txt
+      - uses: pypa/gh-action-pip-audit@1220774d901786e6f652ae159f7b6bc8fea6d266 # v1.1.0
+        with:
+          inputs: requirements.txt

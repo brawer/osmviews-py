@@ -1,0 +1,27 @@
+# SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
+# SPDX-License-Identifier: MIT
+#
+# Keeps an open "release" pull request that bumps the version in pyproject.toml
+# and updates CHANGELOG.md from the Conventional Commit history.  Merging that PR
+# pushes the vX.Y.Z tag and creates the GitHub release, which triggers
+# publish.yml.  See RELEASING.md.
+
+name: release-please
+
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the release PR, tag and GitHub release
+      pull-requests: write # create and update the release PR
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
