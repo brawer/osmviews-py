@@ -38,7 +38,9 @@ with osmviews.open("osmviews.tiff") as o:
 
 The package does **not** download anything. Fetch the dataset (~594 MB,
 regenerated weekly) from `osmviews.DOWNLOAD_URL` however you like, then pass the
-path to `osmviews.open`.
+path to `osmviews.open`. `o.date` gives the last day of OpenStreetMap tile-log
+data in the raster (a `datetime.date`), so you can tell which week's views you
+have.
 
 An `OSMViews` instance is safe to share across threads: every query takes a lock
 only briefly, and tile decoding happens outside it. Decoded tiles are kept in a

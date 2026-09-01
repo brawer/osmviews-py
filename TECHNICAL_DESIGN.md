@@ -48,9 +48,12 @@ shape the OSMViews pipeline produces — little-endian classic TIFF, 256×256 ti
 single-band 32-bit float, DEFLATE or no compression, no predictor. It also checks
 that every tile’s byte range lies inside the file and is no larger than a
 256 KiB tile could plausibly compress to (`TILE_BYTES + 4096`), so a crafted
-file can’t make `rank()` read an outsized blob off disk. Anything else is
-rejected with a `ValueError` (`osmviews.FormatError`). A general TIFF library
-would be far more code and surface area for a format we fully control.
+file can’t make `rank()` read an outsized blob off disk. It also reads the
+`DateTime` tag (306), which the pipeline sets to the last day of tile-log data
+in the raster, and exposes it as `OSMViews.date`. Anything else — including a
+missing or unparseable `DateTime` — is rejected with a `ValueError`
+(`osmviews.FormatError`). A general TIFF library would be far more code and
+surface area for a format we fully control.
 
 **Projection.** The OSMViews grid is Web Mercator (EPSG:3857) and lines up
 exactly with the standard “slippy map” tile scheme, so mapping
