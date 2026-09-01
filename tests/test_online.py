@@ -12,6 +12,7 @@ Assertions check only relative order and coarse thresholds, never absolute
 values: the dataset is regenerated weekly and drifts.
 """
 
+import datetime
 import math
 import os
 
@@ -73,3 +74,9 @@ def test_ranks_reflect_how_the_planet_is_viewed():
         m = o.metrics()
         assert m.out_of_range == 3  # the two poles + the NaN
         assert m.tiles_decoded >= 1
+
+
+def test_exposes_a_plausible_last_tile_log_day():
+    with osmviews.open(_dataset_path()) as o:
+        horizon = datetime.date.today() + datetime.timedelta(days=14)
+        assert datetime.date(2020, 1, 1) <= o.date <= horizon

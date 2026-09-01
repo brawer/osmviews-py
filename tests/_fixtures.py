@@ -5,19 +5,29 @@
 GeoTIFFs, and a self-deleting temp file."""
 
 import contextlib
+import datetime
 import os
 import struct
 import tempfile
 import zlib
 
-#: Number of IFD entries :func:`build_tiff` writes.
-ENTRY_COUNT = 12
+#: Date written into the ``DateTime`` tag (306) unless a test overrides it.
+DEFAULT_DATE = datetime.date(2026, 1, 15)
 
+#: Number of IFD entries :func:`build_tiff` writes (12 raster tags + ``DateTime``).
+ENTRY_COUNT = 13
+
+#: ``DateTime`` is 20 bytes ("YYYY:MM:DD HH:MM:SS" + NUL) and sits right after
+#: the IFD, ahead of the tile tables.
+_IFD_END = 8 + 2 + ENTRY_COUNT * 12 + 4
+#: File offset of the ``DateTime`` string in a :func:`build_tiff` file.
+DATETIME_POS = _IFD_END
 #: File offset of the ``TileOffsets`` array in a :func:`build_tiff` file.
-TILE_OFFSETS_POS = 8 + 2 + ENTRY_COUNT * 12 + 4
+TILE_OFFSETS_POS = DATETIME_POS + 20
 #: File offset of the ``TileByteCounts`` array in a :func:`build_tiff` file.
 TILE_BYTE_COUNTS_POS = TILE_OFFSETS_POS + 16
 
+_TYPE_ASCII = 2
 _TYPE_SHORT = 3
 _TYPE_LONG = 4
 _TYPE_FLOAT = 11
@@ -33,16 +43,17 @@ def _short(v):
     return struct.pack("<H", v) + b"\x00\x00"
 
 
-def build_tiff(compression, tile_values, max_value):
+def build_tiff(compression, tile_values, max_value, date=DEFAULT_DATE):
     """Build a 512x512 single-level GeoTIFF laid out like the real OSMViews file:
     four 256x256 tiles, out-of-line ``TileOffsets`` / ``TileByteCounts``, 32-bit
-    float samples, ``SMaxSampleValue = max_value``.
+    float samples, ``SMaxSampleValue = max_value``, and a ``DateTime`` tag.
 
     ``tile_values[g]`` is the uniform value of grid tile ``g`` (order: top-left,
     top-right, bottom-left, bottom-right).  Tiles with an equal value share one
     compressed blob and therefore one file offset, exercising the dedup cache.
 
-    ``compression`` is ``8`` (zlib) or ``1`` (none).
+    ``compression`` is ``8`` (zlib) or ``1`` (none).  ``date`` is a
+    :class:`datetime.date` for the ``DateTime`` tag, or ``None`` to omit it.
     """
     assert len(tile_values) == 4
     blobs = []
@@ -59,8 +70,17 @@ def build_tiff(compression, tile_values, max_value):
         blob_bits.append(bits)
         grid_to_blob.append(len(blobs) - 1)
 
+    n_entries = 13 if date is not None else 12
+    ifd_end = 8 + 2 + n_entries * 12 + 4
+    datetime_bytes = b""
+    if date is not None:
+        datetime_bytes = date.strftime("%Y:%m:%d 00:00:00").encode("ascii") + b"\x00"
+        assert len(datetime_bytes) == 20
+    tile_offsets_pos = ifd_end + len(datetime_bytes)
+    tile_byte_counts_pos = tile_offsets_pos + 16
+
     blob_pos = []
-    cursor = TILE_BYTE_COUNTS_POS + 16
+    cursor = tile_byte_counts_pos + 16
     for blob in blobs:
         blob_pos.append(cursor)
         cursor += len(blob)
@@ -74,24 +94,32 @@ def build_tiff(compression, tile_values, max_value):
         _entry(259, _TYPE_SHORT, 1, _short(compression)),
         _entry(277, _TYPE_SHORT, 1, _short(1)),
         _entry(284, _TYPE_SHORT, 1, _short(1)),
+        # TIFF tags must appear in ascending order; 306 belongs here.
+        *(
+            [_entry(306, _TYPE_ASCII, 20, struct.pack("<I", ifd_end))]
+            if date is not None
+            else []
+        ),
         _entry(322, _TYPE_SHORT, 1, _short(256)),
         _entry(323, _TYPE_SHORT, 1, _short(256)),
-        _entry(324, _TYPE_LONG, 4, struct.pack("<I", TILE_OFFSETS_POS)),
-        _entry(325, _TYPE_LONG, 4, struct.pack("<I", TILE_BYTE_COUNTS_POS)),
+        _entry(324, _TYPE_LONG, 4, struct.pack("<I", tile_offsets_pos)),
+        _entry(325, _TYPE_LONG, 4, struct.pack("<I", tile_byte_counts_pos)),
         _entry(339, _TYPE_SHORT, 1, _short(3)),
         _entry(341, _TYPE_FLOAT, 1, struct.pack("<f", max_value)),
     ]
-    assert len(entries) == ENTRY_COUNT
+    assert len(entries) == n_entries
 
     buf = bytearray()
     buf += b"II"
     buf += struct.pack("<H", 42)
     buf += struct.pack("<I", 8)
-    buf += struct.pack("<H", ENTRY_COUNT)
+    buf += struct.pack("<H", n_entries)
     for e in entries:
         buf += e
     buf += struct.pack("<I", 0)  # no next IFD
-    assert len(buf) == TILE_OFFSETS_POS
+    assert len(buf) == ifd_end
+    buf += datetime_bytes
+    assert len(buf) == tile_offsets_pos
     for v in tile_offsets:
         buf += struct.pack("<I", v)
     for v in tile_byte_counts:

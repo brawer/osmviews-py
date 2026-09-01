@@ -21,7 +21,8 @@ local disk and answers point queries::
 
 The package does not download anything: fetch the raster from
 :data:`DOWNLOAD_URL` (regenerated weekly, ~594 MB) however you like, then hand
-:func:`open` the path.
+:func:`open` the path.  :attr:`OSMViews.date` reports the last day of tile-log
+data it contains.
 
 An :class:`OSMViews` instance is safe to share across threads.
 """
@@ -30,6 +31,7 @@ from __future__ import annotations
 
 import array
 import builtins
+import datetime
 import math
 import mmap
 import sys
@@ -157,6 +159,16 @@ class OSMViews:
         with self._lock:
             self._cache.insert(offset, tile, elapsed)
         return self._scale(value)
+
+    @property
+    def date(self) -> datetime.date:
+        """The last day of OpenStreetMap tile-log data painted into this raster
+        (the TIFF ``DateTime`` tag).
+
+        The published file is regenerated weekly, so this is how a caller tells
+        which week's views they are actually looking at.
+        """
+        return self._header.date
 
     def metrics(self) -> Metrics:
         """A snapshot of internal counters (:class:`Metrics`), meant to be logged

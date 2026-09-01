@@ -12,6 +12,7 @@ general TIFF reader.
 
 from __future__ import annotations
 
+import datetime
 import math
 import struct
 from dataclasses import dataclass
@@ -25,6 +26,7 @@ if TYPE_CHECKING:
 
 TAG_IMAGE_WIDTH = 256
 TAG_IMAGE_LENGTH = 257
+TAG_DATETIME = 306
 TAG_BITS_PER_SAMPLE = 258
 TAG_COMPRESSION = 259
 TAG_SAMPLES_PER_PIXEL = 277
@@ -37,6 +39,7 @@ TAG_TILE_BYTE_COUNTS = 325
 TAG_SAMPLE_FORMAT = 339
 TAG_MAX_SAMPLE_VALUE = 341
 
+TYPE_ASCII = 2
 TYPE_SHORT = 3
 TYPE_LONG = 4
 TYPE_FLOAT = 11
@@ -90,6 +93,9 @@ class Header:
     compression: int
     #: Highest sample value anywhere in the raster (``SMaxSampleValue``).
     max_value: float
+    #: Last day of OpenStreetMap tile-log data painted into the raster, from the
+    #: TIFF ``DateTime`` tag (306).
+    date: datetime.date
     tile_offsets: TileTable
     tile_byte_counts: TileTable
 
@@ -170,6 +176,7 @@ def _parse(data: Buffer) -> Header:
     fields: dict[int, int | None] = {}
     tile_offsets_entry: _Entry | None = None
     tile_byte_counts_entry: _Entry | None = None
+    datetime_entry: _Entry | None = None
     max_value: float | None = None
     for i in range(n):
         at = ifd + 2 + i * 12
@@ -181,6 +188,8 @@ def _parse(data: Buffer) -> Header:
             tile_byte_counts_entry = entry
         elif tag == TAG_MAX_SAMPLE_VALUE:
             max_value = entry.scalar_float(data)
+        elif tag == TAG_DATETIME:
+            datetime_entry = entry
         else:
             fields[tag] = entry.scalar_int()
 
@@ -213,6 +222,9 @@ def _parse(data: Buffer) -> Header:
         raise _err("missing SMaxSampleValue")
     if not math.isfinite(max_value):
         raise _err("SMaxSampleValue is not finite")
+    if datetime_entry is None:
+        raise _err("missing DateTime")
+    date = _parse_datetime(data, datetime_entry)
 
     tiles_across = size // TILE_SIDE
     grid = tiles_across * tiles_across
@@ -237,6 +249,7 @@ def _parse(data: Buffer) -> Header:
             raise _err("tile data extends past end of file")
 
     return Header(
+        date=date,
         size=size,
         tiles_across=tiles_across,
         compression=compression,
@@ -244,6 +257,26 @@ def _parse(data: Buffer) -> Header:
         tile_offsets=tile_offsets,
         tile_byte_counts=tile_byte_counts,
     )
+
+
+def _parse_datetime(data: Buffer, entry: _Entry) -> datetime.date:
+    """Read the ``DateTime`` tag (306).  TIFF 6.0 spells it ``"YYYY:MM:DD
+    HH:MM:SS"`` -- 20 bytes with the trailing NUL.  The OSMViews pipeline puts
+    the last tile-log day here, so the time is always midnight and we hand back
+    just the :class:`datetime.date`."""
+    # ASCII, and long enough to be out-of-line (never packed into the 4-byte
+    # value field) -- the string alone is 19 characters.
+    if entry.typ != TYPE_ASCII or entry.count < 20:
+        raise _err("malformed DateTime")
+    at = int(_U32.unpack_from(entry.value)[0])
+    if at + entry.count > len(data):
+        raise _err("DateTime extends past end of file")
+    text = bytes(data[at : at + entry.count]).split(b"\x00", 1)[0]
+    try:
+        stamp = datetime.datetime.strptime(text.decode("ascii"), "%Y:%m:%d %H:%M:%S")
+    except (ValueError, UnicodeDecodeError):
+        raise _err("malformed DateTime") from None
+    return stamp.date()
 
 
 def _tile_table(data: Buffer, entry: _Entry, grid: int) -> TileTable:

@@ -5,6 +5,7 @@
 exercise open / rank / metrics end to end.  Mirrors the Rust crate's
 ``tests/offline.rs``."""
 
+import datetime
 import os
 import threading
 
@@ -13,6 +14,7 @@ import pytest
 import osmviews
 from osmviews._tiff import MAX_TILE_BLOB
 from tests._fixtures import (
+    DATETIME_POS,
     TILE_BYTE_COUNTS_POS,
     TILE_OFFSETS_POS,
     build_tiff,
@@ -116,6 +118,29 @@ def test_disabled_cache_still_answers_and_never_stores():
             assert m.tiles_cached == 0
             assert m.tiles_decoded == 2
             assert m.tile_cache_hits == 0
+
+
+def test_exposes_the_last_tile_log_day():
+    d = datetime.date(2026, 3, 8)
+    with temp_tiff(build_tiff(8, [1.0, 1.0, 1.0, 1.0], 10.0, date=d)) as path:
+        with osmviews.open(path) as o:
+            assert o.date == d
+            assert isinstance(o.date, datetime.date)
+
+
+def test_rejects_missing_datetime():
+    b = build_tiff(8, [1.0, 1.0, 1.0, 1.0], 10.0, date=None)
+    with temp_tiff(b) as path:
+        with pytest.raises(ValueError, match="DateTime"):
+            osmviews.open(path)
+
+
+def test_rejects_malformed_datetime():
+    b = bytearray(build_tiff(8, [1.0, 1.0, 1.0, 1.0], 10.0))
+    b[DATETIME_POS : DATETIME_POS + 20] = b"not a timestamp\x00\x00\x00\x00\x00"
+    with temp_tiff(bytes(b)) as path:
+        with pytest.raises(ValueError, match="DateTime"):
+            osmviews.open(path)
 
 
 def test_rejects_non_tiff():
