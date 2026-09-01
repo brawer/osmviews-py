@@ -12,6 +12,13 @@ the Conventional Commit history. Versioning follows
 the **minor** version may be breaking — see
 [RELEASING.md](RELEASING.md#choosing-the-version-number).
 
+## [0.2.3](https://github.com/brawer/osmviews-py/compare/v0.2.2...v0.2.3) (2026-09-01)
+
+
+### 🆕 Features
+
+* expose the raster's last tile-log day as OSMViews.date ([#44](https://github.com/brawer/osmviews-py/issues/44)) ([dbbd1fa](https://github.com/brawer/osmviews-py/commit/dbbd1faf11c0cbc993e8692bc9fc0643f7d9b525))
+
 ## [0.2.2](https://github.com/brawer/osmviews-py/compare/v0.2.1...v0.2.2) (2026-08-31)
 
 
