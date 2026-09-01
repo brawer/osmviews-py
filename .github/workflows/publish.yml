@@ -89,7 +89,7 @@ jobs:
       # SLSA build-provenance attestation for the sdist and wheel, keyed to their
       # SHA-256 digests and stored in this repo's attestation store (not attached
       # to the release, which is immutable). Verify with `gh attestation verify`.
-      - uses: actions/attest-build-provenance@c074443f1aee8d4aeeae555aebba3282517141b2 # v3.0.0
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v3.0.0
         with:
           subject-path: "dist/*"
 
