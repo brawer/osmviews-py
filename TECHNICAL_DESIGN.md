@@ -27,6 +27,10 @@ planet. The file is about 594 MB and covers the whole world at ~150 m resolution
 Being able to score a location by “how much do people look here” is a useful
 signal wherever geographic results need to be ranked by real-world importance.
 
+The overall system is described in a [defensive
+publication](https://raw.githubusercontent.com/brawer/osmviews/main/docs/defensive-publication/defensive-publication.pdf),
+written as such to establish prior art and keep the approach unpatentable.
+
 A [Rust client](https://github.com/brawer/osmviews-rs) also exists. The two share
 their behaviour and documentation but not their code, and the Rust
 implementation is roughly 13× faster on the cached hot path in the
