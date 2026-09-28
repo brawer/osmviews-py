@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
 # SPDX-License-Identifier: MIT
 
-"""A client for `OSMViews <https://osmviews.toolforge.org>`_, a world-wide
+"""A client for `OSMViews <https://osmviews.brawer.ch>`_, a world-wide
 ranking of geographic locations by how much they are looked at on
 OpenStreetMap-based maps.
 
@@ -64,7 +64,7 @@ except PackageNotFoundError:  # a source tree that was never installed
 #: constant means a change of hosting is a version bump here rather than a string
 #: to hunt down in every caller.  The file behind it is regenerated weekly and is
 #: roughly 594 MB.
-DOWNLOAD_URL = "https://osmviews.toolforge.org/download/osmviews.tiff"
+DOWNLOAD_URL = "https://osmviews.brawer.ch/download/osmviews.tiff"
 
 #: Decoded-tile cache capacity used by :func:`open` by default, in tiles.  Each
 #: tile is a fixed 256 KiB, so this is about 16 MiB.

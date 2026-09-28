@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/brawer/osmviews-py/badge)](https://scorecard.dev/viewer/?uri=github.com/brawer/osmviews-py)
 [![REUSE status](https://api.reuse.software/badge/github.com/brawer/osmviews-py)](https://api.reuse.software/info/github.com/brawer/osmviews-py)
 
-Python client for [OSMViews](https://osmviews.toolforge.org), a world-wide ranking
+Python client for [OSMViews](https://osmviews.brawer.ch), a world-wide ranking
 of geographic locations by how much they are looked at on OpenStreetMap-based
 maps. See the [main project](https://github.com/brawer/osmviews) for background.
 

@@ -59,13 +59,13 @@ jobs:
       - name: Download the OSMViews dataset
         if: steps.dataset-cache.outputs.cache-hit != 'true'
         run: | # keep in sync with osmviews.DOWNLOAD_URL
-          # Toolforge throttles by IP range and can be slow: retry generously,
+          # The download server can be slow: retry generously,
           # but give up on a connection that stalls below 1 KiB/s for 5 minutes
           # so a dead transfer fails in minutes instead of hanging for hours.
           curl -fSL -o osmviews.tiff \
             --connect-timeout 60 --retry 5 --retry-delay 15 --retry-all-errors \
             --speed-limit 1024 --speed-time 300 \
-            https://osmviews.toolforge.org/download/osmviews.tiff
+            https://osmviews.brawer.ch/download/osmviews.tiff
 
       - name: Run the full test suite, including the real-dataset test
         run: OSMVIEWS_TIFF="$PWD/osmviews.tiff" uv run --group dev pytest -q

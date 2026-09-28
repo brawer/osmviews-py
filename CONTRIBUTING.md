@@ -50,7 +50,7 @@ test in `tests/test_online.py` runs against the real ~594 MB dataset and is
 skipped by default. To run it, fetch the file and point the test at it:
 
 ```sh
-curl -fSL -o osmviews.tiff https://osmviews.toolforge.org/download/osmviews.tiff
+curl -fSL -o osmviews.tiff https://osmviews.brawer.ch/download/osmviews.tiff
 OSMVIEWS_TIFF="$PWD/osmviews.tiff" uv run pytest
 ```
 
