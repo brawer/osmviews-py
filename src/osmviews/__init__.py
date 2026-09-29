@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2026 Sascha Brawer <sascha@brawer.ch>
 # SPDX-License-Identifier: MIT
 
-"""A client for `OSMViews <https://osmviews.toolforge.org>`_, a world-wide
+"""A client for `OSMViews <https://osmviews.brawer.ch>`_, a world-wide
 ranking of geographic locations by how much they are looked at on
 OpenStreetMap-based maps.
 
@@ -19,8 +19,9 @@ local disk and answers point queries::
         sahara = o.rank(13.0, 23.0)
         assert shibuya > sahara
 
-The package does not download anything: fetch the raster from
-:data:`DOWNLOAD_URL` (regenerated weekly, ~594 MB) however you like, then hand
+The package does not download anything.  The raster (~594 MB) is rebuilt weekly
+under a new dated name: fetch the data package at :data:`DATAPACKAGE_URL`, which
+names the current file and its SHA-256, download it however you like, then hand
 :func:`open` the path.  :attr:`OSMViews.date` reports the last day of tile-log
 data it contains.
 
@@ -37,6 +38,7 @@ import mmap
 import sys
 import threading
 import time
+import warnings
 import zlib
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
@@ -51,20 +53,51 @@ if TYPE_CHECKING:
     from types import TracebackType
     from typing import Self
 
-__all__ = ["DOWNLOAD_URL", "FormatError", "Metrics", "OSMViews", "__version__", "open"]
+__all__ = [
+    "DATAPACKAGE_URL",
+    "FormatError",
+    "Metrics",
+    "OSMViews",
+    "__version__",
+    "open",
+]
 
 try:
     __version__ = _version("osmviews")
 except PackageNotFoundError:  # a source tree that was never installed
     __version__ = "0.0.0+unknown"
 
-#: Where the OSMViews raster is published.
+#: The Frictionless Data Package descriptor for the published OSMViews raster.
 #:
-#: This package never downloads anything itself, but exposing the URL as a
-#: constant means a change of hosting is a version bump here rather than a string
-#: to hunt down in every caller.  The file behind it is regenerated weekly and is
-#: roughly 594 MB.
-DOWNLOAD_URL = "https://osmviews.toolforge.org/download/osmviews.tiff"
+#: Each weekly build is an immutable file with a dated name, so there is no
+#: single download link; this small JSON file names the current one (its
+#: ``resources`` entry named ``osmviews``: ``path``, relative to this URL, plus
+#: ``bytes`` and a ``sha256:`` ``hash``).  This package never downloads anything
+#: itself, but exposing the URL as a constant means a change of hosting is a
+#: version bump here rather than a string to hunt down in every caller.
+DATAPACKAGE_URL = "https://osmviews.brawer.ch/data/datapackage.json"
+
+if TYPE_CHECKING:
+    #: Deprecated: use :data:`DATAPACKAGE_URL`.  Removed in 0.3.0.
+    DOWNLOAD_URL: str
+else:
+    _DEPRECATED_DOWNLOAD_URL = "https://osmviews.toolforge.org/download/osmviews.tiff"
+
+    # Resolved lazily so that only callers still using the old name get warned.
+    # Kept out of type checkers' view: they see the plain declaration above, and
+    # typos in other attribute names keep being reported.
+    def __getattr__(name: str) -> str:
+        if name == "DOWNLOAD_URL":
+            warnings.warn(
+                "osmviews.DOWNLOAD_URL is deprecated and will be removed in "
+                "0.3.0; the URL stops working after 2026-12-10. Fetch the data "
+                "package at osmviews.DATAPACKAGE_URL to find the current raster.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return _DEPRECATED_DOWNLOAD_URL
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 #: Decoded-tile cache capacity used by :func:`open` by default, in tiles.  Each
 #: tile is a fixed 256 KiB, so this is about 16 MiB.

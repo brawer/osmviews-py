@@ -61,5 +61,5 @@ jobs:
         run: |
           uv run --isolated --no-project --with "$(echo dist/*.whl)" python -c "
           import osmviews
-          from osmviews import DOWNLOAD_URL, FormatError, Metrics, OSMViews, open
+          from osmviews import DATAPACKAGE_URL, FormatError, Metrics, OSMViews, open
           print('installed wheel imports OK')"

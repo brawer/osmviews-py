@@ -33,9 +33,22 @@ def _datapath(filename):
     return os.path.join(os.path.dirname(__file__), "data", filename)
 
 
-def test_download_url_points_at_a_tiff():
-    assert osmviews.DOWNLOAD_URL.startswith("https://")
-    assert osmviews.DOWNLOAD_URL.endswith(".tiff")
+def test_datapackage_url_points_at_the_descriptor():
+    assert osmviews.DATAPACKAGE_URL.startswith("https://")
+    assert osmviews.DATAPACKAGE_URL.endswith("/datapackage.json")
+
+
+def test_download_url_is_deprecated_but_still_works():
+    with pytest.deprecated_call(match="DATAPACKAGE_URL"):
+        url = osmviews.DOWNLOAD_URL
+    assert url.startswith("https://")
+    assert url.endswith(".tiff")
+    assert "DOWNLOAD_URL" not in osmviews.__all__
+
+
+def test_unknown_attributes_still_raise():
+    with pytest.raises(AttributeError, match="no_such_thing"):
+        osmviews.no_such_thing  # noqa: B018
 
 
 def test_version_is_exposed():

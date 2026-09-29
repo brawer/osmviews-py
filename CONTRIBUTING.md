@@ -47,10 +47,16 @@ CI runs the same checks on Python 3.11, 3.12 and 3.13, and requires `ruff check`
 
 Most tests build tiny synthetic GeoTIFFs and need nothing extra. The end-to-end
 test in `tests/test_online.py` runs against the real ~594 MB dataset and is
-skipped by default. To run it, fetch the file and point the test at it:
+skipped by default. To run it, fetch the file and point the test at it. The
+data package names the current dated raster and its checksum (this needs `jq`):
 
 ```sh
-curl -fSL -o osmviews.tiff https://osmviews.toolforge.org/download/osmviews.tiff
+base=https://osmviews.brawer.ch/data
+curl -fsSL -o datapackage.json "$base/datapackage.json"
+raster='.resources[] | select(.name == "osmviews")'
+curl -fSL -o osmviews.tiff "$base/$(jq -r "$raster | .path" datapackage.json)"
+echo "$(jq -r "$raster | .hash" datapackage.json | cut -d: -f2)  osmviews.tiff" \
+  | shasum -a 256 --check
 OSMVIEWS_TIFF="$PWD/osmviews.tiff" uv run pytest
 ```
 
@@ -90,7 +96,7 @@ work is licensed under the [MIT License](LICENSE), and to abide by our
 ```
 pyproject.toml         project metadata, build and tool configuration
 src/osmviews/
-  __init__.py          public API: open(), OSMViews, DOWNLOAD_URL, Metrics
+  __init__.py          public API: open(), OSMViews, DATAPACKAGE_URL, Metrics
   _tiff.py             hand-written OSMViews-GeoTIFF header parser
   _projection.py       WGS84 -> Web Mercator pixel projection
   _cache.py            decoded-tile LRU cache and the Metrics dataclass
