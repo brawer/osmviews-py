@@ -12,6 +12,13 @@ the Conventional Commit history. Versioning follows
 the **minor** version may be breaking — see
 [RELEASING.md](RELEASING.md#choosing-the-version-number).
 
+## [0.2.4](https://github.com/brawer/osmviews-py/compare/v0.2.3...v0.2.4) (2026-09-29)
+
+
+### 🆕 Features
+
+* add DATAPACKAGE_URL and deprecate DOWNLOAD_URL ([#50](https://github.com/brawer/osmviews-py/issues/50)) ([0c8a139](https://github.com/brawer/osmviews-py/commit/0c8a13935af899fd50ff3dca53cd3eee594f6ef7))
+
 ## [0.2.3](https://github.com/brawer/osmviews-py/compare/v0.2.2...v0.2.3) (2026-09-01)
 
 
