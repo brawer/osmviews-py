@@ -39,11 +39,28 @@ jobs:
           echo "tag: $tag    pyproject.toml: $version"
           test "$tag" = "$version"
 
-      # The dataset is regenerated weekly, so key the cache by ISO week: at most
-      # one download per week, however often this workflow runs.
-      - name: Dataset cache key
-        id: week
-        run: echo "key=$(date -u +%G-W%V)" >> "$GITHUB_OUTPUT"
+      # The dataset is published as a Frictionless data package: its descriptor
+      # names the current raster (a dated, immutable file) with its SHA-256.
+      # See https://github.com/brawer/osmviews/blob/main/docs/downloads.md.
+      # The path and hash come from the network, so check their shape before
+      # they reach a URL, a cache key or a shell.
+      - name: Resolve the current OSMViews dataset
+        id: dataset
+        run: |
+          curl -fsSL -o datapackage.json \
+            --connect-timeout 60 --retry 5 --retry-delay 15 --retry-all-errors \
+            https://osmviews.brawer.ch/data/datapackage.json
+          raster='.resources[] | select(.name == "osmviews")'
+          path=$(jq -er "$raster | .path" datapackage.json)
+          hash=$(jq -er "$raster | .hash" datapackage.json)
+          [[ "$path" =~ ^osmviews-[0-9]{8}\.tiff$ ]] || { echo "unexpected path: $path"; exit 1; }
+          [[ "$hash" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "unexpected hash: $hash"; exit 1; }
+          echo "$path  $hash"
+          echo "path=$path" >> "$GITHUB_OUTPUT"
+          echo "sha256=${hash#sha256:}" >> "$GITHUB_OUTPUT"
+
+      # Each raster file is immutable, so key the cache by its name: at most one
+      # download per weekly build, however often this workflow runs.
       - name: Cache the OSMViews dataset
         id: dataset-cache
         # Safe against cache poisoning: this workflow has no `pull_request`
@@ -54,18 +71,26 @@ jobs:
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: osmviews.tiff
-          key: osmviews-tiff-${{ steps.week.outputs.key }}
+          key: ${{ steps.dataset.outputs.path }}
 
       - name: Download the OSMViews dataset
         if: steps.dataset-cache.outputs.cache-hit != 'true'
-        run: | # keep in sync with osmviews.DOWNLOAD_URL
-          # Toolforge throttles by IP range and can be slow: retry generously,
-          # but give up on a connection that stalls below 1 KiB/s for 5 minutes
-          # so a dead transfer fails in minutes instead of hanging for hours.
+        env:
+          RASTER_PATH: ${{ steps.dataset.outputs.path }}
+        run: |
+          # Retry generously, but give up on a connection that stalls below
+          # 1 KiB/s for 5 minutes so a dead transfer fails in minutes instead of
+          # hanging for hours.
           curl -fSL -o osmviews.tiff \
             --connect-timeout 60 --retry 5 --retry-delay 15 --retry-all-errors \
             --speed-limit 1024 --speed-time 300 \
-            https://osmviews.toolforge.org/download/osmviews.tiff
+            "https://osmviews.brawer.ch/data/$RASTER_PATH"
+
+      # Also checked on a cache hit, so a corrupt cache entry fails loudly.
+      - name: Verify the dataset against the data package
+        env:
+          RASTER_SHA256: ${{ steps.dataset.outputs.sha256 }}
+        run: echo "$RASTER_SHA256  osmviews.tiff" | sha256sum --check --strict
 
       - name: Run the full test suite, including the real-dataset test
         run: OSMVIEWS_TIFF="$PWD/osmviews.tiff" uv run --group dev pytest -q
