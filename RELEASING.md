@@ -58,7 +58,7 @@ Only `feat:`, `fix:` and `perf:` commits cut a release (and appear in
 next real release. Use `Release-As:` if you need to ship one of those alone.
 
 The public API is: `OSMViews` and its methods, `Metrics` and its fields, `open`,
-`DOWNLOAD_URL`, `FormatError`, and the documented behaviour of `rank`.
+`DATAPACKAGE_URL`, `FormatError`, and the documented behaviour of `rank`.
 
 | Bump                  | When                                                                                                        |
 | --------------------- | ----------------------------------------------------------------------------------------------------------- |

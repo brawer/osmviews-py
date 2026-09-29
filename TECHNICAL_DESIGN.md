@@ -18,7 +18,7 @@ third-party packages.
 
 ## Background
 
-[OSMViews](https://osmviews.toolforge.org) is a weekly pipeline
+[OSMViews](https://osmviews.brawer.ch) is a weekly pipeline
 ([brawer/osmviews](https://github.com/brawer/osmviews)) that aggregates roughly a
 year of OpenStreetMap map-tile access logs into a single Cloud-Optimized GeoTIFF.
 Each pixel holds a 32-bit float: the density of map views for that patch of the
@@ -102,7 +102,10 @@ takes, so they add nothing measurable to the hot path.
 ## Non-goals
 
 - **Downloading or refreshing** the dataset. Callers fetch the file themselves;
-  the package only exposes `DOWNLOAD_URL`.
+  the package only exposes `DATAPACKAGE_URL`, the descriptor that names the
+  current dated raster and its SHA-256. (The earlier `DOWNLOAD_URL` pointed at a
+  single fixed link, which the move to immutable dated files on a CDN made
+  obsolete; it is deprecated and goes away in 0.3.0.)
 - **On-demand tile loading over the network.** The file genuinely is a
   Cloud-Optimized GeoTIFF and per-tile HTTP range requests would be feasible, but
   this package targets pipelines that download the whole file up front.

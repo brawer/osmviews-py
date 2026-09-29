@@ -11,7 +11,7 @@ SPDX-License-Identifier: MIT
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/brawer/osmviews-py/badge)](https://scorecard.dev/viewer/?uri=github.com/brawer/osmviews-py)
 [![REUSE status](https://api.reuse.software/badge/github.com/brawer/osmviews-py)](https://api.reuse.software/info/github.com/brawer/osmviews-py)
 
-Python client for [OSMViews](https://osmviews.toolforge.org), a world-wide ranking
+Python client for [OSMViews](https://osmviews.brawer.ch), a world-wide ranking
 of geographic locations by how much they are looked at on OpenStreetMap-based
 maps. See the [main project](https://github.com/brawer/osmviews) for background.
 
@@ -36,11 +36,34 @@ with osmviews.open("osmviews.tiff") as o:
     assert shibuya > altstetten > ushuaia > sahara
 ```
 
-The package does **not** download anything. Fetch the dataset (~594 MB,
-regenerated weekly) from `osmviews.DOWNLOAD_URL` however you like, then pass the
-path to `osmviews.open`. `o.date` gives the last day of OpenStreetMap tile-log
-data in the raster (a `datetime.date`), so you can tell which week's views you
-have.
+The package does **not** download anything. The dataset (~594 MB) is rebuilt
+weekly under a new dated file name, so there is no single download link: fetch
+the small [data package](https://datapackage.org) descriptor at
+`osmviews.DATAPACKAGE_URL`, which names the current file and its SHA-256,
+download that however you like, then pass the path to `osmviews.open`. With the
+standard library alone:
+
+```python
+import hashlib, json, shutil, urllib.parse, urllib.request
+import osmviews
+
+with urllib.request.urlopen(osmviews.DATAPACKAGE_URL) as r:
+    package = json.load(r)
+raster = next(res for res in package["resources"] if res["name"] == "osmviews")
+url = urllib.parse.urljoin(osmviews.DATAPACKAGE_URL, raster["path"])
+with urllib.request.urlopen(url) as r, open("osmviews.tiff", "wb") as f:
+    shutil.copyfileobj(r, f)
+with open("osmviews.tiff", "rb") as f:
+    if f"sha256:{hashlib.file_digest(f, 'sha256').hexdigest()}" != raster["hash"]:
+        raise ValueError(f"checksum mismatch for {url}")
+```
+
+`o.date` gives the last day of OpenStreetMap tile-log data in the raster (a
+`datetime.date`), so you can tell which week's views you have; it matches the
+data package's `version`.
+
+`osmviews.DOWNLOAD_URL` is deprecated: the link it names stops working after
+2026-12-10, and the constant goes away in 0.3.0.
 
 An `OSMViews` instance is safe to share across threads: every query takes a lock
 only briefly, and tile decoding happens outside it. Decoded tiles are kept in a
