@@ -7,7 +7,14 @@
   "changelog-path": "CHANGELOG.md",
   "packages": {
     ".": {
-      "extra-files": ["CITATION.cff"]
+      "extra-files": [
+        "CITATION.cff",
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name.value=='osmviews')].version"
+        }
+      ]
     }
   },
   "changelog-sections": [

@@ -111,7 +111,8 @@ takes, so they add nothing measurable to the hot path.
   this package targets pipelines that download the whole file up front.
 - **Writing GeoTIFFs**, reading other coordinate reference systems, or reading
   rasters other than OSMViews.
-- **Exposing raw pixel values** or a dataset date (the file carries no date).
+- **Exposing raw pixel values.** The `0.0..1.0` scale of `rank()` is the
+  contract; see **Output**. (The dataset date *is* exposed, as `OSMViews.date`.)
 - **High performance.** It’s pure Python. The Rust client exists for that.
 
 ## Security
