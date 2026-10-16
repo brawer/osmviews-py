@@ -35,7 +35,8 @@ A [Rust client](https://github.com/brawer/osmviews-rs) also exists. The two shar
 their behaviour and documentation but not their code, and the Rust
 implementation is roughly 13× faster on the cached hot path in the
 micro-benchmarks (~40 ns per query versus ~0.5 µs here); the cold tile-decode
-path is comparable.
+path is comparable. A [Go client](https://github.com/brawer/osmviews-go)
+also exists.
 
 ## Design
 
