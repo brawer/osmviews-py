@@ -85,7 +85,8 @@ tile or by S2 cell ID) so neighbouring queries reuse cached tiles.
 
 This is pure Python; it is not trying to be fast. If throughput matters, the
 [Rust client](https://github.com/brawer/osmviews-rs) answers the same query in
-tens of nanoseconds.
+tens of nanoseconds, and there is also a
+[Go client](https://github.com/brawer/osmviews-go).
 
 ## No dependencies
 
